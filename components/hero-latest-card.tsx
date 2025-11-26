@@ -8,11 +8,13 @@ import { getExcerpt } from "../utils/excerpt";
 
 interface HeroLatestCardProps {
   post: Post;
+  isCommunity?: boolean;
 }
 
-export default function HeroLatestCard({ post }: HeroLatestCardProps) {
+export default function HeroLatestCard({ post, isCommunity = false }: HeroLatestCardProps) {
   const readingTime = post.content ? 5 + calculateReadingTime(post.content) : undefined;
   const cleanedExcerpt = (post.excerpt || "").replace("Table of Contents", "");
+  const basePath = isCommunity ? "/community" : "/technology";
 
   return (
     <div className="bg-green-50 rounded-2xl p-6 border-2 border-green-200 relative overflow-hidden min-h-[440px] flex flex-col">
@@ -25,7 +27,7 @@ export default function HeroLatestCard({ post }: HeroLatestCardProps) {
               title={post.title}
               coverImage={post.featuredImage}
               slug={post.slug}
-              isCommunity={false}
+              isCommunity={isCommunity}
               imgClassName="w-full h-full object-cover object-center"
             />
           </div>
@@ -68,7 +70,7 @@ export default function HeroLatestCard({ post }: HeroLatestCardProps) {
         {/* Title - Always 2 lines */}
         <h3 className="text-2xl font-semibold text-card-foreground leading-tight flex-shrink-0 min-h-[3.5rem]">
           <Link
-            href={`/technology/${post.slug}`}
+            href={`${basePath}/${post.slug}`}
             className="line-clamp-2 hover:text-green-700 transition-colors"
             dangerouslySetInnerHTML={{ __html: post.title }}
           />

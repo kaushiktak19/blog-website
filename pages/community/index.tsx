@@ -1,61 +1,1063 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Head from "next/head";
-import { GetStaticProps } from "next";
+import { GetServerSideProps } from "next";
+import Link from "next/link";
 import Container from "../../components/container";
-import MoreStories from "../../components/more-stories";
-import HeroPost from "../../components/hero-post";
 import Layout from "../../components/layout";
-import { getAllPostsForCommunity } from "../../lib/api";
+import { getAllCommunityPosts, getCommunityPostsByPage } from "../../lib/api";
 import Header from "../../components/header";
+import { getExcerpt } from "../../utils/excerpt";
+import PostGrid from "../../components/post-grid";
+import PostCard from "../../components/post-card";
+import PostListRow from "../../components/post-list-row";
+import DateComponent from "../../components/date";
+import { FaSearch, FaTimes } from "react-icons/fa";
+import { calculateReadingTime } from "../../utils/calculateReadingTime";
+import Image from "next/image";
+import { Post } from "../../types/post";
+import HeroLatestCard from "../../components/hero-latest-card";
+import HeroFeaturedCard from "../../components/hero-featured-card";
+import { CheckCircle2, Eye } from "lucide-react";
+import TechnologyBackground from "../../components/technology-background";
 
-export default function Community({ allPosts: { edges, pageInfo }, preview }) {
-  const heroPost = edges[0]?.node;
-  const excerpt = getExcerpt(edges[0]?.node.excerpt);
-  const morePosts = edges.slice(1);
-  function getExcerpt(content) {
-    const maxWords = 50;
-    // Split the content into an array of words
-    const words = content.split(" ");
+const DATE_FILTERS = [
+  { value: "all", label: "All dates" },
+  { value: "7", label: "Last 7 days" },
+  { value: "30", label: "Last 30 days" },
+  { value: "365", label: "Last year" },
+];
 
-    // Ensure the excerpt does not exceed the maximum number of words
-    if (words.length > maxWords) {
-      return words.slice(0, maxWords).join(" ") + "...";
+const SORT_OPTIONS = [
+  { value: "newest", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
+  { value: "az", label: "Title A → Z" },
+  { value: "za", label: "Title Z → A" },
+];
+
+const COMMUNITY_PAGE_SIZE = 18;
+
+type AnimationPhase = "idle" | "out" | "in";
+
+type ViewMode = "grid" | "list" | "featured" | "compact";
+
+const VIEW_OPTIONS: { value: ViewMode; label: string }[] = [
+  { value: "grid", label: "Detailed view" },
+  { value: "list", label: "List view" },
+  { value: "featured", label: "Featured view" },
+  { value: "compact", label: "Compact view" },
+];
+
+const dedupePosts = (posts: Post[] = []) => {
+  const seen = new Set<string>();
+  return posts.filter((post) => {
+    if (!post?.slug) return false;
+    if (seen.has(post.slug)) return false;
+    seen.add(post.slug);
+    return true;
+  });
+};
+
+type PageInfo = {
+  hasNextPage: boolean;
+  endCursor: string | null;
+};
+
+type CommunityPageProps = {
+  posts: Post[];
+  pageInfo: PageInfo;
+  currentPage: number;
+  preview: boolean;
+  latestPost: Post | null;
+  featuredPosts: Post[];
+  allPosts: Post[];
+  totalPages: number;
+};
+
+const formatAuthorName = (name?: string) => {
+  if (!name) return "Anonymous";
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+};
+
+const resolveAuthorImage = (image?: string | null) => {
+  if (!image || image === "imag1" || image === "image") {
+    return "/blog/images/author.png";
+  }
+  return image;
+};
+
+const HERO_CARD_ANIMATION_CLASSES: Record<AnimationPhase, string> = {
+  out: "opacity-80 scale-[0.985] translate-y-[6px] shadow-none",
+  in: "opacity-90 scale-[0.995] translate-y-[2px] shadow-[0_6px_18px_rgba(15,23,42,0.12)]",
+  idle: "opacity-100 scale-100 translate-y-0 shadow-[0_14px_36px_rgba(15,23,42,0.18)]",
+};
+
+export default function CommunityIndex({
+  posts,
+  pageInfo,
+  currentPage,
+  preview,
+  latestPost,
+  featuredPosts,
+  allPosts,
+  totalPages,
+}: CommunityPageProps) {
+  const heroPost = latestPost ?? posts[0];
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedAuthor, setSelectedAuthor] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [sortOption, setSortOption] = useState("newest");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const initialGlobalPosts = allPosts?.length ? dedupePosts(allPosts) : dedupePosts(posts);
+  const [globalPosts, setGlobalPosts] = useState<Post[]>(initialGlobalPosts);
+  const [hasGlobalPosts, setHasGlobalPosts] = useState(Boolean(initialGlobalPosts.length));
+  const [isGlobalLoading, setIsGlobalLoading] = useState(false);
+  const [clientPage, setClientPage] = useState(currentPage);
+
+  const [isVisible, setIsVisible] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [animationPhase, setAnimationPhase] = useState<AnimationPhase>("idle");
+  const heroSectionRef = useRef<HTMLDivElement>(null);
+  const rotationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const animationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const settleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const latestPosts = useMemo(() => {
+    const allLatest = latestPost ? [latestPost, ...posts.filter((p) => p.slug !== latestPost.slug)] : posts;
+    return dedupePosts(allLatest).slice(0, 4);
+  }, [latestPost, posts]);
+
+  const featuredPostsList = useMemo(() => {
+    return dedupePosts(featuredPosts).slice(0, 4);
+  }, [featuredPosts]);
+
+  const maxRotationIndex = useMemo(
+    () => Math.max(latestPosts.length, featuredPostsList.length),
+    [latestPosts.length, featuredPostsList.length]
+  );
+
+  const authors = useMemo<string[]>(() => {
+    const uniqueAuthors = new Set<string>(globalPosts.map((post) => post.ppmaAuthorName || "Anonymous"));
+    return ["all", ...Array.from(uniqueAuthors)];
+  }, [globalPosts]);
+
+  const filtersActive = useMemo(() => {
+    return (
+      searchTerm.trim().length > 0 ||
+      selectedAuthor !== "all" ||
+      dateFilter !== "all" ||
+      sortOption !== "newest"
+    );
+  }, [searchTerm, selectedAuthor, dateFilter, sortOption]);
+
+  const filterablePosts = useMemo(() => {
+    const basePosts = filtersActive ? (hasGlobalPosts ? globalPosts : []) : posts;
+
+    return dedupePosts(basePosts);
+  }, [filtersActive, hasGlobalPosts, globalPosts, posts]);
+
+  const filteredPosts = useMemo(() => {
+    const normalize = (value?: string) => value?.replace(/<[^>]*>/g, "").toLowerCase() ?? "";
+
+    const matchesDateFilter = (postDate: string) => {
+      if (dateFilter === "all") return true;
+      const days = Number(dateFilter);
+      const now = new Date();
+      const date = new Date(postDate);
+      const diffInDays = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24);
+      return diffInDays <= days;
+    };
+
+    const sorted = [...filterablePosts]
+      .filter((post) => {
+        const term = searchTerm.toLowerCase();
+        const titleMatch = normalize(post.title).includes(term);
+        const excerptMatch = normalize(post.excerpt).includes(term);
+        return titleMatch || excerptMatch;
+      })
+      .filter((post) =>
+        selectedAuthor === "all" ? true : (post.ppmaAuthorName || "Anonymous") === selectedAuthor
+      )
+      .filter((post) => matchesDateFilter(post.date));
+
+    sorted.sort((a, b) => {
+      if (sortOption === "newest") {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      }
+      if (sortOption === "oldest") {
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      }
+      if (sortOption === "az") {
+        return a.title.localeCompare(b.title);
+      }
+      return b.title.localeCompare(a.title);
+    });
+
+    return sorted;
+  }, [filterablePosts, searchTerm, selectedAuthor, dateFilter, sortOption]);
+
+  const visiblePosts = useMemo(() => {
+    if (filtersActive) {
+      const start = (clientPage - 1) * COMMUNITY_PAGE_SIZE;
+      return filteredPosts.slice(start, start + COMMUNITY_PAGE_SIZE);
+    }
+    return filteredPosts;
+  }, [filtersActive, filteredPosts, clientPage]);
+
+  const postsWithMeta = useMemo(
+    () =>
+      visiblePosts.map((post) => ({
+        post,
+        readingTime: post.content ? 5 + calculateReadingTime(post.content) : undefined,
+      })),
+    [visiblePosts]
+  );
+
+  const showEmptyState =
+    visiblePosts.length === 0 && !(filtersActive && isGlobalLoading && !hasGlobalPosts);
+  const showHeroSection = !filtersActive && currentPage === 1;
+
+  const resetFilters = () => {
+    setSearchTerm("");
+    setSelectedAuthor("all");
+    setDateFilter("all");
+    setSortOption("newest");
+    setViewMode("grid");
+  };
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.2 }
+    );
+    if (heroSectionRef.current) {
+      observer.observe(heroSectionRef.current);
+    }
+    return () => observer.disconnect();
+  }, []);
+
+  const clearRotationTimers = useCallback(() => {
+    if (rotationIntervalRef.current) {
+      clearInterval(rotationIntervalRef.current);
+      rotationIntervalRef.current = null;
+    }
+    if (animationTimeoutRef.current) {
+      clearTimeout(animationTimeoutRef.current);
+      animationTimeoutRef.current = null;
+    }
+    if (settleTimeoutRef.current) {
+      clearTimeout(settleTimeoutRef.current);
+      settleTimeoutRef.current = null;
+    }
+  }, []);
+
+  const startRotation = useCallback(() => {
+    clearRotationTimers();
+    if (!isVisible || maxRotationIndex <= 1) return;
+
+    const OUT_DURATION = 600;
+    const IN_DURATION = 200;
+    const IDLE_DURATION = 6200;
+    const CYCLE_DURATION = OUT_DURATION + IN_DURATION + IDLE_DURATION;
+
+    rotationIntervalRef.current = setInterval(() => {
+      setAnimationPhase("out");
+
+      animationTimeoutRef.current = setTimeout(() => {
+        setSelectedIndex((prev) => (prev + 1) % maxRotationIndex);
+        setAnimationPhase("in");
+
+        settleTimeoutRef.current = setTimeout(() => {
+          setAnimationPhase("idle");
+        }, IN_DURATION);
+      }, OUT_DURATION);
+    }, CYCLE_DURATION);
+  }, [clearRotationTimers, isVisible, maxRotationIndex]);
+
+  const handleManualSelection = useCallback(
+    (index: number) => {
+      if (index < 0 || index >= maxRotationIndex) return;
+      clearRotationTimers();
+      setAnimationPhase("out");
+      animationTimeoutRef.current = setTimeout(() => {
+        setSelectedIndex(index);
+        setAnimationPhase("in");
+        settleTimeoutRef.current = setTimeout(() => {
+          setAnimationPhase("idle");
+        }, 900);
+        startRotation();
+      }, 720);
+    },
+    [clearRotationTimers, maxRotationIndex, startRotation]
+  );
+
+  useEffect(() => {
+    startRotation();
+    return () => clearRotationTimers();
+  }, [startRotation, clearRotationTimers]);
+
+  useEffect(() => {
+    if (hasGlobalPosts || isGlobalLoading) return;
+
+    let isCancelled = false;
+    const controller = new AbortController();
+
+    const fetchAllPosts = async () => {
+      try {
+        setIsGlobalLoading(true);
+        const response = await fetch("/api/community-posts?mode=all", {
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          throw new Error("Failed to load community posts");
+        }
+        const data = await response.json();
+        if (!isCancelled && Array.isArray(data?.posts)) {
+          setGlobalPosts(dedupePosts(data.posts));
+          setHasGlobalPosts(true);
+        }
+      } catch (error) {
+        if (isCancelled) return;
+        console.error("Failed to fetch full community posts", error);
+      } finally {
+        if (!isCancelled) {
+          setIsGlobalLoading(false);
+        }
+      }
+    };
+
+    fetchAllPosts();
+
+    return () => {
+      isCancelled = true;
+      controller.abort();
+    };
+  }, [hasGlobalPosts, isGlobalLoading]);
+
+  useEffect(() => {
+    if (filtersActive) {
+      setClientPage(1);
+    } else {
+      setClientPage(currentPage);
+    }
+  }, [filtersActive, currentPage]);
+
+  useEffect(() => {
+    if (!filtersActive) return;
+    const totalPages = Math.max(1, Math.ceil(filteredPosts.length / COMMUNITY_PAGE_SIZE) || 1);
+    if (clientPage > totalPages) {
+      setClientPage(totalPages);
+    }
+  }, [filtersActive, filteredPosts.length, clientPage]);
+
+  const browseHeading = useMemo(() => {
+    const trimmedSearch = searchTerm.trim();
+    const filterParts: string[] = [];
+
+    if (selectedAuthor !== "all") {
+      filterParts.push(`author: ${selectedAuthor}`);
     }
 
-    return content;
-  }
+    if (dateFilter !== "all") {
+      const dateLabel = DATE_FILTERS.find((filter) => filter.value === dateFilter)?.label;
+      if (dateLabel) {
+        filterParts.push(`date: ${dateLabel.toLowerCase()}`);
+      }
+    }
+
+    if (sortOption !== "newest") {
+      const sortLabel = SORT_OPTIONS.find((sort) => sort.value === sortOption)?.label;
+      if (sortLabel) {
+        filterParts.push(`sorted ${sortLabel.toLowerCase()}`);
+      }
+    }
+
+    if (trimmedSearch.length > 0) {
+      return filterParts.length
+        ? `Search results for “${trimmedSearch}” (${filterParts.join(", ")})`
+        : `Search results for “${trimmedSearch}”`;
+    }
+
+    if (filterParts.length > 0) {
+      return `Filtered blogs (${filterParts.join(", ")})`;
+    }
+
+    return "All community blogs";
+  }, [searchTerm, selectedAuthor, dateFilter, sortOption]);
 
   return (
-    <Layout preview={preview} featuredImage={heroPost?.featuredImage?.node.sourceUrl} Title={heroPost?.title} Description={`Blog from the Technology Page`}>
+    <Layout
+      preview={preview}
+      featuredImage={heroPost?.featuredImage?.node.sourceUrl}
+      Title={heroPost?.title}
+      Description={`Blog from the Community Page`}
+    >
       <Head>
-        <title>{`Keploy Blog`}</title>
+        <title>{`Keploy`}</title>
       </Head>
+      <TechnologyBackground />
       <Header />
+
+      {showHeroSection && (
+        <div ref={heroSectionRef} className="min-h-screen py-12 px-4 sm:px-6 relative">
+          <div className="container mx-auto relative z-10 max-w-6xl">
+            <div
+              className={`text-center mb-16 transition-all duration-1000 ${
+                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+              }`}
+            >
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-8 leading-[1.05] px-2 tracking-tight">
+                Keploy Community{" "}
+                <span className="bg-gradient-to-r from-orange-400 via-orange-500 to-amber-400 bg-clip-text text-transparent">
+                  Blog
+                </span>
+              </h1>
+              <p className="text-xl text-muted-foreground max-w-3xl mx-auto px-4">
+                Stories, spotlights, and wins from the builders powering the Keploy community.
+              </p>
+            </div>
+
+            <div className="max-w-5xl mx-auto mb-16">
+              <div
+                className={`grid lg:grid-cols-2 gap-8 transition-all duration-1000 delay-200 ${
+                  isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
+                }`}
+              >
+                <div
+                  className={`bg-card rounded-2xl overflow-hidden border-2 border-green-500/30 transition-[transform,opacity,box-shadow] duration-[1800ms] ease-[cubic-bezier(0.33,0.11,0.2,0.99)] ${HERO_CARD_ANIMATION_CLASSES[animationPhase]}`}
+                >
+                  <div className="bg-green-500 px-4 py-3 flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-white" />
+                    <span className="text-white font-semibold">Latest Blogs</span>
+                  </div>
+                  <div className="p-5">
+                    {latestPosts.length > 0 && selectedIndex < latestPosts.length ? (
+                      <HeroLatestCard post={latestPosts[selectedIndex]} isCommunity />
+                    ) : null}
+                  </div>
+                </div>
+
+                <div
+                  className={`bg-card rounded-2xl overflow-hidden border-2 border-orange-500/30 transition-[transform,opacity,box-shadow] duration-[1800ms] ease-[cubic-bezier(0.33,0.11,0.2,0.99)] ${HERO_CARD_ANIMATION_CLASSES[animationPhase]}`}
+                >
+                  <div className="bg-orange-500 px-4 py-3 flex items-center gap-2">
+                    <Eye className="w-5 h-5 text-white" />
+                    <span className="text-white font-semibold">Featured Blogs</span>
+                  </div>
+                  <div className="p-5">
+                    {featuredPostsList.length > 0 && selectedIndex < featuredPostsList.length ? (
+                      <HeroFeaturedCard post={featuredPostsList[selectedIndex]} isCommunity />
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center gap-2 mt-12">
+                {Array.from({ length: Math.max(latestPosts.length, featuredPostsList.length) }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleManualSelection(i)}
+                    className={`rounded-full transition-all duration-300 ${
+                      selectedIndex === i ? "bg-orange-500" : "bg-orange-500/30 hover:bg-orange-500/50"
+                    }`}
+                    style={{
+                      width: selectedIndex === i ? "2rem" : "0.75rem",
+                      height: "0.75rem",
+                    }}
+                    aria-label={`View blog ${i + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <section className="mt-0 w-full">
+        <Container>
+          <div className="relative">
+            <div className="pt-6 pb-10 md:pt-8 md:pb-12">
+              <div className="rounded-2xl border border-orange-100/70 bg-white/95 shadow-[0_8px_24px_rgba(15,23,42,0.08)] px-5 py-5 md:px-6 md:py-6">
+                <div className="flex flex-wrap gap-3 items-end">
+                  <div className="relative flex-[2] min-w-[280px] flex flex-col gap-1">
+                    <span className="text-[0.65rem] uppercase tracking-[0.35em] text-slate-500">
+                      Search
+                    </span>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search community posts..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full h-10 pl-11 pr-9 rounded-xl border border-orange-100/90 bg-white text-sm font-semibold text-slate-900 shadow-[0_2px_8px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300 transition-all placeholder:text-slate-400"
+                      />
+                      <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-400/80 pointer-events-none w-4 h-4" />
+                      {searchTerm && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchTerm("")}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center"
+                          aria-label="Clear search"
+                        >
+                          <FaTimes className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex-[0.8] min-w-[140px]">
+                    <FilterSelect
+                      label="Author"
+                      value={selectedAuthor}
+                      onChange={setSelectedAuthor}
+                      options={authors.map((author) => ({
+                        value: author,
+                        label: author === "all" ? "All authors" : author,
+                      }))}
+                    />
+                  </div>
+
+                  <div className="flex-[0.8] min-w-[130px]">
+                    <FilterSelect
+                      label="Published"
+                      value={dateFilter}
+                      onChange={setDateFilter}
+                      options={DATE_FILTERS}
+                    />
+                  </div>
+
+                  <div className="flex-[0.8] min-w-[130px]">
+                    <FilterSelect
+                      label="Sort"
+                      value={sortOption}
+                      onChange={setSortOption}
+                      options={SORT_OPTIONS}
+                    />
+                  </div>
+
+                  <div className="flex-[0.8] min-w-[140px]">
+                    <FilterSelect
+                      label="View mode"
+                      value={viewMode}
+                      onChange={(value) => setViewMode(value as ViewMode)}
+                      options={VIEW_OPTIONS}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="shrink-0 h-10 px-5 rounded-xl border border-orange-200/90 bg-white text-sm font-semibold text-orange-600 hover:bg-orange-50 hover:border-orange-300 transition-all"
+                  >
+                    Reset all
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
       <Container>
-        {/* <Intro /> */}
-        {heroPost && (
-          <HeroPost
-            title={heroPost.title}
-            coverImage={heroPost.featuredImage}
-            date={heroPost.date}
-            author={heroPost.ppmaAuthorName}
-            slug={heroPost.slug}
-            excerpt={excerpt}
-            isCommunity={true}
-          />
-        )}
-        {morePosts.length > 0 && (
-          <MoreStories isIndex={true} posts={morePosts} isCommunity={true} initialPageInfo={pageInfo} />
-        )}
+        <section className="mt-16 mb-12">
+          <div className="flex items-start justify-between flex-wrap gap-4 mb-8">
+            <div>
+              <p className="text-sm uppercase tracking-widest text-orange-500 mb-2">Browse</p>
+              <h2 className="text-3xl md:text-4xl font-semibold text-left">{browseHeading}</h2>
+              <span className="sr-only" aria-live="polite">
+                {filtersActive
+                  ? `${filteredPosts.length} global results match your filters`
+                  : `${visiblePosts.length} results available on this page`}
+              </span>
+            </div>
+          </div>
+
+          {filtersActive && isGlobalLoading && !hasGlobalPosts && (
+            <div className="flex items-center gap-2 text-sm text-orange-500 mb-6">
+              <span className="h-2 w-2 rounded-full bg-orange-400 animate-pulse" />
+              <span>Loading all community blogs…</span>
+            </div>
+          )}
+
+          {showEmptyState ? (
+            <div className="text-center bg-white border border-dashed border-gray-200 rounded-3xl p-12 text-gray-500">
+              No posts match your filters. Try adjusting the search or filters above.
+            </div>
+          ) : viewMode === "grid" ? (
+            <PostGrid>
+              {postsWithMeta.map(({ post, readingTime }) => (
+                <PostCard
+                  key={post.slug}
+                  title={post.title}
+                  coverImage={post.featuredImage}
+                  date={post.date}
+                  author={post.ppmaAuthorName}
+                  slug={post.slug}
+                  excerpt={getExcerpt(post.excerpt, 20)}
+                  isCommunity
+                  authorImage={post.ppmaAuthorImage}
+                  readingTime={readingTime}
+                />
+              ))}
+            </PostGrid>
+          ) : viewMode === "list" ? (
+            <div className="space-y-6">
+              {postsWithMeta.map(({ post, readingTime }) => (
+                <PostListRow
+                  key={post.slug}
+                  post={post}
+                  excerptOverride={getExcerpt(post.excerpt, 42)}
+                  readingTime={readingTime}
+                  isCommunity
+                />
+              ))}
+            </div>
+          ) : viewMode === "featured" ? (
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {postsWithMeta.map(({ post, readingTime }) => (
+                <FeaturedBlogCard key={post.slug} post={post} readingTime={readingTime} />
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {postsWithMeta.map(({ post, readingTime }) => (
+                <CompactBlogCard key={post.slug} post={post} readingTime={readingTime} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <PaginationControls
+          currentPage={currentPage}
+          filtersActive={filtersActive}
+          clientPage={clientPage}
+          onClientPageChange={setClientPage}
+          totalFilteredPosts={filteredPosts.length}
+          pageSize={COMMUNITY_PAGE_SIZE}
+          totalPages={totalPages}
+        />
       </Container>
     </Layout>
   );
 }
 
-export const getStaticProps: GetStaticProps = async ({ preview = false }) => {
-  const allPosts = await getAllPostsForCommunity(preview);
+function FeaturedBlogCard({ post, readingTime }: { post: Post; readingTime?: number }) {
+  const authorName = formatAuthorName(post.ppmaAuthorName);
+  const authorImage = resolveAuthorImage(post.ppmaAuthorImage);
+  const coverSrc = post.featuredImage?.node?.sourceUrl;
+  const readingLabel =
+    typeof readingTime === "number" && readingTime > 0 ? `${readingTime} min read` : null;
+  const href = `/community/${post.slug}`;
+  const plainTitle = post.title?.replace(/<[^>]*>/g, "") ?? "Community blog cover";
+  const cleanedExcerpt = (post.excerpt || "").replace("Table of Contents", "");
 
-  return {
-    props: { allPosts, preview },
-    revalidate: 10,
+  return (
+    <Link href={href} className="group block h-full">
+      <article className="h-full bg-white rounded-2xl border border-orange-200/80 shadow-[0_22px_50px_rgba(15,23,42,0.11)] hover:shadow-[0_28px_70px_rgba(15,23,42,0.16)] transition-all duration-300 overflow-hidden hover:border-orange-300 hover:-translate-y-2 flex flex-col">
+        <div className="relative w-full aspect-video overflow-hidden">
+          {coverSrc ? (
+            <Image
+              src={coverSrc}
+              alt={plainTitle}
+              fill
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-white to-orange-100" />
+          )}
+        </div>
+        <div className="p-6 flex flex-col flex-1 gap-4">
+          <h3 className="text-xl md:text-2xl font-semibold text-gray-900 leading-snug">
+            <span
+              className="line-clamp-2 group-hover:text-orange-600 transition-colors duration-200"
+              dangerouslySetInnerHTML={{ __html: post.title }}
+            />
+          </h3>
+          <div className="mt-auto flex items-center gap-1.5 text-xs md:text-sm text-gray-500 min-w-0">
+            <Image
+              src={authorImage}
+              alt={`${authorName} avatar`}
+              width={24}
+              height={24}
+              className="w-5 h-5 md:w-6 md:h-6 rounded-full flex-shrink-0"
+            />
+            <span className="font-semibold text-gray-900 truncate max-w-[120px] md:max-w-none">
+              {authorName}
+            </span>
+            <span className="text-gray-300 flex-shrink-0">•</span>
+            <span className="whitespace-nowrap flex-shrink-0">
+              <DateComponent dateString={post.date} />
+            </span>
+            {readingLabel && (
+              <>
+                <span className="text-gray-300 flex-shrink-0">•</span>
+                <span className="whitespace-nowrap flex-shrink-0">{readingLabel}</span>
+              </>
+            )}
+          </div>
+        </div>
+      </article>
+    </Link>
+  );
+}
+
+function CompactBlogCard({ post, readingTime }: { post: Post; readingTime?: number }) {
+  const authorName = formatAuthorName(post.ppmaAuthorName);
+  const authorImage = resolveAuthorImage(post.ppmaAuthorImage);
+  const readingLabel =
+    typeof readingTime === "number" && readingTime > 0 ? `${readingTime} min read` : null;
+  const href = `/community/${post.slug}`;
+  const cleanedExcerpt = (post.excerpt || "").replace("Table of Contents", "");
+
+  return (
+    <Link href={href} className="group block h-full">
+      <article className="h-full bg-white rounded-2xl border border-orange-200/80 shadow-[0_22px_50px_rgba(15,23,42,0.11)] hover:shadow-[0_28px_70px_rgba(15,23,42,0.16)] transition-all duration-300 overflow-hidden hover:border-orange-300 hover:-translate-y-2 flex flex-col">
+        <div className="p-6 flex flex-col flex-1 gap-4">
+          <h3 className="text-xl md:text-2xl font-semibold text-gray-900 leading-snug">
+            <span
+              className="line-clamp-2 group-hover:text-orange-600 transition-colors duration-200"
+              dangerouslySetInnerHTML={{ __html: post.title }}
+            />
+          </h3>
+          <div
+            className="text-gray-600 text-sm md:text-base leading-relaxed line-clamp-2"
+            dangerouslySetInnerHTML={{ __html: getExcerpt(cleanedExcerpt, 20) }}
+          />
+          <div className="mt-auto flex items-center gap-1.5 text-xs md:text-sm text-gray-500 min-w-0">
+            <Image
+              src={authorImage}
+              alt={`${authorName} avatar`}
+              width={24}
+              height={24}
+              className="w-5 h-5 md:w-6 md:h-6 rounded-full flex-shrink-0"
+            />
+            <span className="font-semibold text-gray-900 truncate max-w-[120px] md:max-w-none">
+              {authorName}
+            </span>
+            <span className="text-gray-300 flex-shrink-0">•</span>
+            <span className="whitespace-nowrap flex-shrink-0">
+              <DateComponent dateString={post.date} />
+            </span>
+            {readingLabel && (
+              <>
+                <span className="text-gray-300 flex-shrink-0">•</span>
+                <span className="whitespace-nowrap flex-shrink-0">{readingLabel}</span>
+              </>
+            )}
+          </div>
+        </div>
+      </article>
+    </Link>
+  );
+}
+
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const activeOption = options.find((option) => option.value === value);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="flex flex-col gap-1 w-full relative" ref={containerRef}>
+      <span className="text-[0.65rem] text-slate-500 uppercase tracking-[0.35em]">
+        {label}
+      </span>
+      <button
+        type="button"
+        className={`relative w-full h-10 rounded-xl border text-left px-3 pr-9 text-sm font-semibold transition-all flex items-center min-w-0 ${
+          isOpen
+            ? "border-orange-300 shadow-[0_4px_12px_rgba(15,23,42,0.08)]"
+            : "border-orange-100/90 shadow-[0_2px_8px_rgba(15,23,42,0.04)]"
+        } bg-white text-slate-900 hover:border-orange-200 hover:shadow-[0_4px_12px_rgba(15,23,42,0.08)] focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300`}
+        onClick={() => setIsOpen((prev) => !prev)}
+      >
+        <span className="truncate flex-1 min-w-0">{activeOption?.label ?? "Select"}</span>
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 flex-shrink-0">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M6 9l6 6 6-6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-orange-100/80 rounded-xl shadow-[0_8px_24px_rgba(15,23,42,0.12)] z-10 overflow-hidden">
+          <div className="max-h-48 overflow-y-auto py-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-slate-400">
+            {options.map((option) => {
+              const isActive = option.value === value;
+              return (
+                <button
+                  type="button"
+                  key={option.value}
+                  className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors truncate ${
+                    isActive ? "bg-orange-50 text-slate-900" : "text-slate-700 hover:text-orange-600"
+                  }`}
+                  onClick={() => {
+                    onChange(option.value);
+                    setIsOpen(false);
+                  }}
+                  title={option.label}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PaginationControls({
+  currentPage,
+  filtersActive,
+  clientPage,
+  onClientPageChange,
+  totalFilteredPosts,
+  pageSize,
+  totalPages,
+}: {
+  currentPage: number;
+  filtersActive: boolean;
+  clientPage: number;
+  onClientPageChange: (page: number) => void;
+  totalFilteredPosts: number;
+  pageSize: number;
+  totalPages: number;
+}) {
+  const filteredTotalPages = Math.max(1, Math.ceil(totalFilteredPosts / pageSize) || 1);
+  const totalPageCount = filtersActive ? filteredTotalPages : Math.max(1, totalPages || 1);
+  const activePage = filtersActive ? clientPage : currentPage;
+  const MAX_VISIBLE = 6;
+  const [windowStart, setWindowStart] = useState(1);
+  const maxWindowStart = Math.max(1, totalPageCount - MAX_VISIBLE + 1);
+
+  useEffect(() => {
+    const halfWindow = Math.floor(MAX_VISIBLE / 2);
+    let nextStart = Math.max(1, activePage - halfWindow);
+    let nextEnd = Math.min(totalPageCount, nextStart + MAX_VISIBLE - 1);
+    nextStart = Math.max(1, nextEnd - MAX_VISIBLE + 1);
+    setWindowStart((prev) => (prev === nextStart ? prev : nextStart));
+  }, [activePage, totalPageCount]);
+
+  if (totalPageCount <= 1) {
+    return null;
+  }
+
+  const windowEnd = Math.min(totalPageCount, windowStart + MAX_VISIBLE - 1);
+  const pageRange = Array.from({ length: windowEnd - windowStart + 1 }, (_, idx) => windowStart + idx);
+  const showLeadingFirst = windowStart > 1;
+  const showTrailingLast = windowEnd < totalPageCount;
+  const showLeftEllipsis = windowStart > 2;
+  const showRightEllipsis = windowEnd < totalPageCount - 1;
+
+  const shiftWindow = (direction: "prev" | "next") => {
+    setWindowStart((prev) => {
+      if (direction === "prev") {
+        return Math.max(1, prev - MAX_VISIBLE);
+      }
+      return Math.min(maxWindowStart, prev + MAX_VISIBLE);
+    });
   };
+
+  const createHref = (page: number) => (page <= 1 ? "/community" : `/community?page=${page}`);
+
+  const pageButtonClasses = (isActive: boolean) =>
+    `w-10 h-10 rounded-2xl text-sm font-semibold flex items-center justify-center transition-all ${
+      isActive
+        ? "bg-gradient-to-br from-orange-500 to-orange-400 text-white shadow-[0_12px_25px_rgba(249,115,22,0.35)]"
+        : "bg-white/80 border border-white/60 text-slate-600 hover:text-orange-600 hover:border-orange-200"
+    }`;
+
+  const renderPageNode = (page: number) => {
+    const isActive = page === activePage;
+    if (filtersActive) {
+      return (
+        <button
+          type="button"
+          key={`page-${page}`}
+          className={pageButtonClasses(isActive)}
+          onClick={() => onClientPageChange(page)}
+          disabled={isActive}
+          aria-current={isActive ? "page" : undefined}
+        >
+          {page}
+        </button>
+      );
+    }
+    return (
+      <Link
+        key={`page-${page}`}
+        href={createHref(page)}
+        className={pageButtonClasses(isActive)}
+        aria-current={isActive ? "page" : undefined}
+      >
+        {page}
+      </Link>
+    );
+  };
+
+  const arrowClasses = (disabled: boolean) =>
+    `w-10 h-10 rounded-2xl border text-base font-semibold flex items-center justify-center transition-all ${
+      disabled
+        ? "border-white/40 text-slate-300 cursor-not-allowed"
+        : "border-white/60 text-slate-600 hover:text-orange-600 hover:border-orange-200"
+    }`;
+
+  const renderArrow = (direction: "prev" | "next") => {
+    const isPrev = direction === "prev";
+    const targetPage = isPrev ? activePage - 1 : activePage + 1;
+    const isDisabled = isPrev ? activePage <= 1 : activePage >= totalPageCount;
+    const label = isPrev ? "Previous page" : "Next page";
+    const symbol = isPrev ? "←" : "→";
+
+    if (filtersActive) {
+      return (
+        <button
+          type="button"
+          key={direction}
+          className={arrowClasses(isDisabled)}
+          disabled={isDisabled}
+          onClick={() => onClientPageChange(Math.min(totalPageCount, Math.max(1, targetPage)))}
+          aria-label={label}
+        >
+          {symbol}
+        </button>
+      );
+    }
+
+    if (isDisabled) {
+      return (
+        <span key={direction} className={arrowClasses(true)} aria-label={label}>
+          {symbol}
+        </span>
+      );
+    }
+
+    return (
+      <Link
+        key={direction}
+        href={createHref(targetPage)}
+        className={arrowClasses(false)}
+        aria-label={label}
+      >
+        {symbol}
+      </Link>
+    );
+  };
+
+  const EllipsisButton = ({ direction }: { direction: "prev" | "next" }) => (
+    <button
+      type="button"
+      className="w-10 h-10 rounded-2xl text-xl font-semibold text-slate-400 hover:text-orange-600 hover:border-orange-200 border border-transparent transition-all"
+      onClick={() => shiftWindow(direction)}
+      aria-label={direction === "prev" ? "Show previous pages" : "Show next pages"}
+    >
+      …
+    </button>
+  );
+
+  return (
+    <div className="border-t border-orange-100/60 pt-12 mt-12 pb-16">
+      <div className="flex flex-wrap justify-center items-center gap-2 rounded-2xl border border-orange-100/70 bg-white/95 px-4 py-3 shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
+        {renderArrow("prev")}
+        {showLeadingFirst && renderPageNode(1)}
+        {showLeftEllipsis && <EllipsisButton direction="prev" />}
+        {pageRange.map(renderPageNode)}
+        {showRightEllipsis && <EllipsisButton direction="next" />}
+        {showTrailingLast && renderPageNode(totalPageCount)}
+        {renderArrow("next")}
+      </div>
+    </div>
+  );
+}
+
+export const getServerSideProps: GetServerSideProps = async ({ query, preview = false }) => {
+  const pageParam = Array.isArray(query.page) ? query.page[0] : query.page;
+  const requestedPage = Math.max(1, Number(pageParam) || 1);
+  const pageSize = COMMUNITY_PAGE_SIZE;
+
+  try {
+    const latestData = await getCommunityPostsByPage(1, 5, preview);
+    const heroPost = latestData.posts[0] ?? null;
+    const [data, allPostsData] = await Promise.all([
+      getCommunityPostsByPage(requestedPage, pageSize, preview),
+      getAllCommunityPosts(preview),
+    ]);
+    const uniqueAllPosts = dedupePosts(allPostsData);
+    const totalPages = Math.max(1, Math.ceil(uniqueAllPosts.length / pageSize) || 1);
+    const lastAvailablePage = totalPages;
+    const featuredPosts = heroPost
+      ? latestData.posts.filter((post) => post.slug !== heroPost.slug).slice(0, 4)
+      : latestData.posts.slice(0, 4);
+
+    if (!data.posts.length && requestedPage > lastAvailablePage) {
+      const destination = lastAvailablePage <= 1 ? "/community" : `/community?page=${lastAvailablePage}`;
+      return {
+        redirect: { destination, permanent: false },
+      };
+    }
+
+    return {
+      props: {
+        posts: data.posts,
+        pageInfo: data.pageInfo,
+        currentPage: requestedPage,
+        preview,
+        latestPost: heroPost ?? null,
+        featuredPosts,
+        allPosts: uniqueAllPosts,
+        totalPages,
+      },
+    };
+  } catch (error) {
+    console.error("community/index getServerSideProps error:", error);
+    return {
+      props: {
+        posts: [],
+        pageInfo: { hasNextPage: false, endCursor: null },
+        currentPage: 1,
+        preview,
+        latestPost: null,
+        featuredPosts: [],
+        allPosts: [],
+        totalPages: 1,
+      },
+    };
+  }
 };

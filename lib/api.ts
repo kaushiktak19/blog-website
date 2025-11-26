@@ -402,14 +402,108 @@ export async function getAllTechnologyPosts(preview = false) {
   return aggregatedPosts;
 }
 
+export async function getCommunityPostsByPage(
+  page = 1,
+  pageSize = 18,
+  preview = false,
+  excludeSlugs: string[] = []
+) {
+  const safePage = Math.max(1, Number(page) || 1);
+  const safePageSize = Math.max(1, Math.min(Number(pageSize) || 18, 50));
+  const excludeSet = new Set(excludeSlugs.filter(Boolean));
+  const startIndex = (safePage - 1) * safePageSize;
+  const endIndex = startIndex + safePageSize;
 
-export async function getAllPostsForCommunity(preview = false, after = null) {
+  let cursor: string | null = null;
+  let hasMoreFromSource = true;
+  let normalizedPageInfo = { hasNextPage: false, endCursor: null as string | null };
+  const collectedPosts: any[] = [];
+
+  while (hasMoreFromSource && collectedPosts.length < endIndex + excludeSet.size) {
+    const { edges, pageInfo } = await getAllPostsForCommunity(
+      preview,
+      cursor,
+      safePageSize + excludeSet.size
+    );
+    const nodes = edges?.map((edge) => edge.node) ?? [];
+    normalizedPageInfo = pageInfo || { hasNextPage: false, endCursor: null };
+    cursor = normalizedPageInfo.endCursor;
+    hasMoreFromSource = normalizedPageInfo.hasNextPage ?? false;
+
+    for (const node of nodes) {
+      if (excludeSet.has(node.slug)) continue;
+      collectedPosts.push(node);
+    }
+
+    if (!hasMoreFromSource) {
+      break;
+    }
+  }
+
+  const posts = collectedPosts.slice(startIndex, endIndex);
+  const totalCollected = collectedPosts.length;
+  const hasNextPage =
+    totalCollected > endIndex ? true : normalizedPageInfo.hasNextPage ?? false;
+
+  if (!posts.length) {
+    const lastAvailablePage = hasMoreFromSource
+      ? safePage
+      : Math.max(1, Math.ceil(totalCollected / safePageSize));
+
+    return {
+      posts: [],
+      pageInfo: { hasNextPage: false, endCursor: cursor },
+      currentPage: safePage,
+      lastAvailablePage,
+    };
+  }
+
+  const lastAvailablePage = hasMoreFromSource
+    ? hasNextPage
+      ? safePage + 1
+      : safePage
+    : Math.max(1, Math.ceil(totalCollected / safePageSize));
+
+  return {
+    posts,
+    pageInfo: { hasNextPage, endCursor: cursor },
+    currentPage: safePage,
+    lastAvailablePage,
+  };
+}
+
+export async function getAllCommunityPosts(preview = false) {
+  let cursor: string | null = null;
+  let hasNextPage = true;
+  const aggregatedPosts: any[] = [];
+  const seenSlugs = new Set<string>();
+
+  while (hasNextPage) {
+    const { edges, pageInfo } = await getAllPostsForCommunity(preview, cursor, 50);
+    const nodes = edges?.map((edge) => edge.node) ?? [];
+    for (const node of nodes) {
+      if (!node?.slug || seenSlugs.has(node.slug)) continue;
+      seenSlugs.add(node.slug);
+      aggregatedPosts.push(node);
+    }
+    hasNextPage = pageInfo?.hasNextPage ?? false;
+    cursor = pageInfo?.endCursor ?? null;
+  }
+
+  return aggregatedPosts;
+}
+
+export async function getAllPostsForCommunity(
+  preview = false,
+  after: string | null = null,
+  first: number = 22
+) {
   try {
     const data = await fetchAPI(
       `
-      query CommunityPosts($after: String) {
+      query CommunityPosts($after: String, $first: Int!) {
         posts(
-          first: 22,
+          first: $first,
           after: $after, 
           where: { 
             orderby: { field: DATE, order: DESC },
@@ -439,6 +533,8 @@ export async function getAllPostsForCommunity(preview = false, after = null) {
                 }
               }
               ppmaAuthorName
+            ppmaAuthorImage
+            content
               categories {
                 edges {
                   node {
@@ -463,6 +559,7 @@ export async function getAllPostsForCommunity(preview = false, after = null) {
         variables: {
           preview,
           after,
+          first,
         },
       }
     );

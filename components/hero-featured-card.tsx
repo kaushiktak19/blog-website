@@ -8,11 +8,13 @@ import { getExcerpt } from "../utils/excerpt";
 
 interface HeroFeaturedCardProps {
   post: Post;
+  isCommunity?: boolean;
 }
 
-export default function HeroFeaturedCard({ post }: HeroFeaturedCardProps) {
+export default function HeroFeaturedCard({ post, isCommunity = false }: HeroFeaturedCardProps) {
   const readingTime = post.content ? 5 + calculateReadingTime(post.content) : undefined;
   const cleanedExcerpt = (post.excerpt || "").replace("Table of Contents", "");
+  const basePath = isCommunity ? "/community" : "/technology";
 
   return (
     <div className="rounded-2xl p-6 border-2 relative overflow-hidden bg-yellow-50 border-yellow-200 min-h-[440px] flex flex-col shadow-[0_12px_30px_rgba(249,115,22,0.18)]">
@@ -25,7 +27,7 @@ export default function HeroFeaturedCard({ post }: HeroFeaturedCardProps) {
               title={post.title}
               coverImage={post.featuredImage}
               slug={post.slug}
-              isCommunity={false}
+              isCommunity={isCommunity}
               imgClassName="w-full h-full object-cover object-center"
             />
           </div>
@@ -68,7 +70,7 @@ export default function HeroFeaturedCard({ post }: HeroFeaturedCardProps) {
         {/* Title - Always 2 lines */}
         <h3 className="text-2xl font-semibold text-card-foreground leading-tight flex-shrink-0 min-h-[3.5rem]">
           <Link
-            href={`/technology/${post.slug}`}
+            href={`${basePath}/${post.slug}`}
             className="line-clamp-2 hover:text-yellow-700 transition-colors"
             dangerouslySetInnerHTML={{ __html: post.title }}
           />
