@@ -439,6 +439,7 @@ export async function getAllPostsForCommunity(preview = false, after = null) {
                 }
               }
               ppmaAuthorName
+              ppmaAuthorImage
               categories {
                 edges {
                   node {
@@ -446,6 +447,7 @@ export async function getAllPostsForCommunity(preview = false, after = null) {
                   }
                 }
               }
+              content
               seo {
                 metaDesc
                 title
