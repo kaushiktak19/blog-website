@@ -101,6 +101,24 @@ export default function Index({
     }, 250);
   };
 
+  const technologyImageUrls = useMemo(
+    () =>
+      technologyNodes
+        .map((post) => post.featuredImage?.node?.sourceUrl)
+        .filter((url): url is string => Boolean(url))
+        .slice(0, 10),
+    [technologyNodes]
+  );
+
+  const communityImageUrls = useMemo(
+    () =>
+      communityNodes
+        .map((post) => post.featuredImage?.node?.sourceUrl)
+        .filter((url): url is string => Boolean(url))
+        .slice(0, 10),
+    [communityNodes]
+  );
+
   const activePost = combinedLatest[activeIndex] || combinedLatest[0];
   const activeCollection = getCollectionFromPost(activePost);
   const activeBasePath = activeCollection === "community" ? "/community" : "/technology";
@@ -170,7 +188,7 @@ export default function Index({
                 </div>
 
                 {combinedLatest.length > 1 && (
-                  <div className="mt-7 flex flex-wrap items-center justify-center gap-2">
+                  <div className="-mt-3 flex flex-wrap items-center justify-center gap-2 -translate-y-3">
                     {combinedLatest.map((post, index) => {
                       const isActive = index === activeIndex;
                       return (
@@ -194,22 +212,24 @@ export default function Index({
                 )}
               </div>
 
-              <div className="grid h-full gap-4 lg:grid-rows-[0.28fr_1fr_0.72fr]">
+              <div className="grid h-full gap-5 lg:grid-rows-[0.28fr_1fr_0.72fr]">
                 <LandingTagsCard tags={curatedTags} className="h-full text-[13px] sm:text-sm" />
-                <div className="grid h-full gap-4 sm:grid-cols-2">
+                <div className="grid h-full gap-5 sm:grid-cols-2">
                   <LandingCollectionCard
                     title="Tech deep dives, architecture notes, and product changelogs."
-                    description="Follow every release and the rationale behind Keploy’s platform decisions."
+                    description="Follow every release, understand the architecture trade-offs, and see how engineers operationalize each change across production."
                     href="/technology"
                     accent="technology"
                     className="h-full text-sm sm:text-[0.95rem]"
+                    imageUrls={technologyImageUrls}
                   />
                   <LandingCollectionCard
                     title="Community stories, meetups, and open-source journeys."
-                    description="See how developers adopt Keploy, share learnings, and scale impact."
+                    description="Discover how builders run meetups, mentor peers, document takeaways, and grow the Keploy ecosystem across global chapters."
                     href="/community"
                     accent="community"
                     className="h-full text-sm sm:text-[0.95rem]"
+                    imageUrls={communityImageUrls}
                   />
                 </div>
                 <LandingWriterProgramCard className="h-full text-[13px] sm:text-sm" />
