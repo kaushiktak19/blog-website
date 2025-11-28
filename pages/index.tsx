@@ -1,16 +1,17 @@
 import Head from "next/head";
 import { GetStaticProps } from "next";
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Container from "../components/container";
 import Layout from "../components/layout";
 import {
-  getAllPostsForCommunity,
-  getAllPostsForTechnology,
+  getAllCommunityPosts,
+  getAllTechnologyPosts,
   getAllTags,
 } from "../lib/api";
 import Header from "../components/header";
 import { HOME_OG_IMAGE_URL } from "../lib/constants";
-import TopBlogs from "../components/topBlogs";
 import Testimonials from "../components/testimonials";
 import TechnologyBackground from "../components/technology-background";
 import LandingLatestCard from "../components/landing/landing-latest-card";
@@ -19,6 +20,13 @@ import LandingTagsCard from "../components/landing/landing-tags-card";
 import LandingWriterProgramCard from "../components/landing/writer-program-card";
 import { Sparkles } from "lucide-react";
 import { Post } from "../types/post";
+import PostGrid from "../components/post-grid";
+import PostCard from "../components/post-card";
+import PostListRow from "../components/post-list-row";
+import DateComponent from "../components/date";
+import { getExcerpt } from "../utils/excerpt";
+import { FaSearch, FaTimes } from "react-icons/fa";
+import { calculateReadingTime } from "../utils/calculateReadingTime";
 
 type PostEdge = {
   node: Post;
@@ -36,12 +44,71 @@ type IndexProps = {
   preview: boolean;
 };
 
+type ViewMode = "grid" | "list" | "featured" | "compact";
+type CollectionFilter = "all" | "technology" | "community";
+type CategorizedPost = Post & { __collection: "technology" | "community" };
+
+const DATE_FILTERS = [
+  { value: "all", label: "All dates" },
+  { value: "7", label: "Last 7 days" },
+  { value: "30", label: "Last 30 days" },
+  { value: "365", label: "Last year" },
+];
+
+const SORT_OPTIONS = [
+  { value: "newest", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
+  { value: "az", label: "Title A → Z" },
+  { value: "za", label: "Title Z → A" },
+];
+
+const VIEW_OPTIONS: { value: ViewMode; label: string }[] = [
+  { value: "grid", label: "Detailed view" },
+  { value: "list", label: "List view" },
+  { value: "featured", label: "Featured view" },
+  { value: "compact", label: "Compact view" },
+];
+
+const BLOG_COLLECTION_OPTIONS: { value: CollectionFilter; label: string }[] = [
+  { value: "all", label: "All blogs" },
+  { value: "technology", label: "Technology only" },
+  { value: "community", label: "Community only" },
+];
+
+const LANDING_PAGE_SIZE = 18;
+
+const dedupePosts = (posts: CategorizedPost[] = []) => {
+  const seen = new Set<string>();
+  return posts.filter((post) => {
+    if (!post?.slug) return false;
+    if (seen.has(post.slug)) return false;
+    seen.add(post.slug);
+    return true;
+  });
+};
+
 const getCollectionFromPost = (post?: Post): "technology" | "community" => {
   const categories = post?.categories?.edges ?? [];
   const hasCommunity = categories.some(
     (edge) => edge?.node?.name?.toLowerCase() === "community"
   );
   return hasCommunity ? "community" : "technology";
+};
+
+const formatAuthorName = (name?: string) => {
+  if (!name) return "Anonymous";
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+};
+
+const resolveAuthorImage = (image?: string | null) => {
+  if (!image || image === "imag1" || image === "image") {
+    return "/blog/images/author.png";
+  }
+  return image;
 };
 export default function Index({
   communityPosts,
@@ -118,6 +185,181 @@ export default function Index({
         .slice(0, 10),
     [communityNodes]
   );
+
+  const categorizedTechnologyPosts = useMemo<CategorizedPost[]>(
+    () =>
+      technologyNodes.map((post) => ({
+        ...post,
+        __collection: "technology" as const,
+      })),
+    [technologyNodes]
+  );
+
+  const categorizedCommunityPosts = useMemo<CategorizedPost[]>(
+    () =>
+      communityNodes.map((post) => ({
+        ...post,
+        __collection: "community" as const,
+      })),
+    [communityNodes]
+  );
+
+  const allCategorizedPosts = useMemo(
+    () => dedupePosts([...categorizedTechnologyPosts, ...categorizedCommunityPosts]),
+    [categorizedTechnologyPosts, categorizedCommunityPosts]
+  );
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedAuthor, setSelectedAuthor] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [sortOption, setSortOption] = useState("newest");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [collectionFilter, setCollectionFilter] = useState<CollectionFilter>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const authors = useMemo<string[]>(() => {
+    const uniqueAuthors = new Set<string>(
+      allCategorizedPosts.map((post) => post.ppmaAuthorName || "Anonymous")
+    );
+    return ["all", ...Array.from(uniqueAuthors)];
+  }, [allCategorizedPosts]);
+
+  const filtersActive = useMemo(
+    () =>
+      searchTerm.trim().length > 0 ||
+      selectedAuthor !== "all" ||
+      dateFilter !== "all" ||
+      sortOption !== "newest" ||
+      collectionFilter !== "all",
+    [searchTerm, selectedAuthor, dateFilter, sortOption, collectionFilter]
+  );
+
+  const filteredPosts = useMemo(() => {
+    const normalize = (value?: string) =>
+      value?.replace(/<[^>]*>/g, "").toLowerCase() ?? "";
+
+    const matchesDateFilter = (postDate: string) => {
+      if (dateFilter === "all") return true;
+      const days = Number(dateFilter);
+      const now = new Date();
+      const date = new Date(postDate);
+      const diffInDays = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24);
+      return diffInDays <= days;
+    };
+
+    const normalizedSearch = searchTerm.toLowerCase();
+
+    const sorted = [...allCategorizedPosts]
+      .filter((post) => {
+        if (!normalizedSearch) return true;
+        const titleMatch = normalize(post.title).includes(normalizedSearch);
+        const excerptMatch = normalize(post.excerpt).includes(normalizedSearch);
+        return titleMatch || excerptMatch;
+      })
+      .filter((post) =>
+        selectedAuthor === "all"
+          ? true
+          : (post.ppmaAuthorName || "Anonymous") === selectedAuthor
+      )
+      .filter((post) => matchesDateFilter(post.date))
+      .filter((post) =>
+        collectionFilter === "all" ? true : post.__collection === collectionFilter
+      );
+
+    sorted.sort((a, b) => {
+      if (sortOption === "newest") {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      }
+      if (sortOption === "oldest") {
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      }
+      if (sortOption === "az") {
+        return a.title.localeCompare(b.title);
+      }
+      return b.title.localeCompare(a.title);
+    });
+
+    return sorted;
+  }, [allCategorizedPosts, searchTerm, selectedAuthor, dateFilter, sortOption, collectionFilter]);
+
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(filteredPosts.length / LANDING_PAGE_SIZE) || 1),
+    [filteredPosts.length]
+  );
+
+  const visiblePosts = useMemo(() => {
+    const start = (currentPage - 1) * LANDING_PAGE_SIZE;
+    return filteredPosts.slice(start, start + LANDING_PAGE_SIZE);
+  }, [filteredPosts, currentPage]);
+
+  const postsWithMeta = useMemo(
+    () =>
+      visiblePosts.map((post) => ({
+        post,
+        readingTime: post.content ? 5 + calculateReadingTime(post.content) : undefined,
+      })),
+    [visiblePosts]
+  );
+
+  const showEmptyState = visiblePosts.length === 0;
+
+  const browseHeading = useMemo(() => {
+    const trimmedSearch = searchTerm.trim();
+    const filterParts: string[] = [];
+
+    if (selectedAuthor !== "all") {
+      filterParts.push(`author: ${selectedAuthor}`);
+    }
+
+    if (collectionFilter !== "all") {
+      filterParts.push(
+        `collection: ${collectionFilter === "technology" ? "technology" : "community"}`
+      );
+    }
+
+    if (dateFilter !== "all") {
+      const dateLabel = DATE_FILTERS.find((filter) => filter.value === dateFilter)?.label;
+      if (dateLabel) {
+        filterParts.push(`date: ${dateLabel.toLowerCase()}`);
+      }
+    }
+
+    if (sortOption !== "newest") {
+      const sortLabel = SORT_OPTIONS.find((sort) => sort.value === sortOption)?.label;
+      if (sortLabel) {
+        filterParts.push(`sorted ${sortLabel.toLowerCase()}`);
+      }
+    }
+
+    if (trimmedSearch.length > 0) {
+      return filterParts.length
+        ? `Search results for “${trimmedSearch}” (${filterParts.join(", ")})`
+        : `Search results for “${trimmedSearch}”`;
+    }
+
+    if (filterParts.length > 0) {
+      return `Filtered blogs (${filterParts.join(", ")})`;
+    }
+
+    return "All technology & community blogs";
+  }, [searchTerm, selectedAuthor, dateFilter, sortOption, collectionFilter]);
+
+  const resetFilters = () => {
+    setSearchTerm("");
+    setSelectedAuthor("all");
+    setDateFilter("all");
+    setSortOption("newest");
+    setViewMode("grid");
+    setCollectionFilter("all");
+  };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedAuthor, dateFilter, sortOption, collectionFilter]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(Math.min(Math.max(1, page), totalPages));
+  };
 
   const activePost = combinedLatest[activeIndex] || combinedLatest[0];
   const activeCollection = getCollectionFromPost(activePost);
@@ -228,32 +470,519 @@ export default function Index({
         </div>
       </section>
 
+      <section className="mt-12 md:mt-16 w-full">
+        <Container>
+          <div className="relative">
+            <div className="pt-6 pb-10 md:pt-8 md:pb-12">
+              <div className="rounded-md border border-black/90 bg-white shadow-md shadow-neutral-900 px-5 py-6 md:px-8 md:py-7 transition-shadow hover:shadow-none">
+                <div className="flex flex-wrap gap-4 items-center">
+                  <div className="relative flex-[2] min-w-[260px]">
+                    <div className="relative rounded-md border border-black/90 bg-white shadow-md shadow-neutral-900 transition-all hover:shadow-sm focus-within:shadow-sm">
+                      <input
+                        type="text"
+                        placeholder="Search technology & community posts..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full h-11 pl-12 pr-10 rounded-md bg-white text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300 transition-all placeholder:text-slate-400"
+                      />
+                      <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400/80 pointer-events-none w-[18px] h-[18px]" />
+                      {searchTerm && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchTerm("")}
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center"
+                          aria-label="Clear search"
+                        >
+                          <FaTimes className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex-[0.8] min-w-[140px]">
+                    <LandingFilterSelect
+                      label="Author"
+                      value={selectedAuthor}
+                      onChange={setSelectedAuthor}
+                      options={authors.map((author) => ({
+                        value: author,
+                        label: author === "all" ? "All authors" : author,
+                      }))}
+                    />
+                  </div>
+
+                  <div className="flex-[0.8] min-w-[150px]">
+                    <LandingFilterSelect
+                      label="Blogs"
+                      value={collectionFilter}
+                      onChange={(value) => setCollectionFilter(value as CollectionFilter)}
+                      options={BLOG_COLLECTION_OPTIONS}
+                    />
+                  </div>
+
+                  <div className="flex-[0.8] min-w-[130px]">
+                    <LandingFilterSelect
+                      label="Published"
+                      value={dateFilter}
+                      onChange={setDateFilter}
+                      options={DATE_FILTERS}
+                    />
+                  </div>
+
+                  <div className="flex-[0.8] min-w-[130px]">
+                    <LandingFilterSelect
+                      label="Sort"
+                      value={sortOption}
+                      onChange={setSortOption}
+                      options={SORT_OPTIONS}
+                    />
+                  </div>
+
+                  <div className="flex-[0.8] min-w-[140px]">
+                    <LandingFilterSelect
+                      label="View mode"
+                      value={viewMode}
+                      onChange={(value) => setViewMode(value as ViewMode)}
+                      options={VIEW_OPTIONS}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="shrink-0 h-11 px-6 rounded-md border border-black/90 bg-white text-sm font-semibold text-orange-600 shadow-md shadow-neutral-900 transition-all hover:bg-neutral-50 hover:border-orange-400 hover:text-orange-700 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-orange-300"
+                  >
+                    Reset all
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
       <Container>
-        <TopBlogs communityPosts={communityPosts} technologyPosts={technologyPosts} />
+        <section className="mt-16 mb-12">
+          <div className="flex items-start justify-between flex-wrap gap-4 mb-8">
+            <div>
+              <p className="text-sm uppercase tracking-widest text-orange-500 mb-2">
+                Browse
+              </p>
+              <h2 className="text-3xl md:text-4xl font-semibold text-left">{browseHeading}</h2>
+              <span className="sr-only" aria-live="polite">
+                {`${filteredPosts.length} results match the current filters`}
+              </span>
+            </div>
+          </div>
+
+          {showEmptyState ? (
+            <div className="text-center bg-white border border-dashed border-gray-200 rounded-3xl p-12 text-gray-500">
+              No posts match your filters. Try adjusting the search or filters above.
+            </div>
+          ) : viewMode === "grid" ? (
+            <PostGrid>
+              {postsWithMeta.map(({ post, readingTime }) => (
+                <PostCard
+                  key={post.slug}
+                  title={post.title}
+                  coverImage={post.featuredImage}
+                  date={post.date}
+                  author={post.ppmaAuthorName}
+                  slug={post.slug}
+                  excerpt={getExcerpt(post.excerpt, 20)}
+                  isCommunity={post.__collection === "community"}
+                  authorImage={post.ppmaAuthorImage}
+                  readingTime={readingTime}
+                />
+              ))}
+            </PostGrid>
+          ) : viewMode === "list" ? (
+            <div className="space-y-6">
+              {postsWithMeta.map(({ post, readingTime }) => (
+                <PostListRow
+                  key={post.slug}
+                  post={post}
+                  isCommunity={post.__collection === "community"}
+                  excerptOverride={getExcerpt(post.excerpt, 42)}
+                  readingTime={readingTime}
+                />
+              ))}
+            </div>
+          ) : viewMode === "featured" ? (
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {postsWithMeta.map(({ post, readingTime }) => (
+                <LandingFeaturedBlogCard key={post.slug} post={post} readingTime={readingTime} />
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {postsWithMeta.map(({ post, readingTime }) => (
+                <LandingCompactBlogCard key={post.slug} post={post} readingTime={readingTime} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <LandingPaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
+      </Container>
+
+      <Container>
         <Testimonials />
       </Container>
     </Layout>
   );
 }
 
+function LandingFeaturedBlogCard({
+  post,
+  readingTime,
+}: {
+  post: CategorizedPost;
+  readingTime?: number;
+}) {
+  const authorName = formatAuthorName(post.ppmaAuthorName);
+  const authorImage = resolveAuthorImage(post.ppmaAuthorImage);
+  const coverSrc = post.featuredImage?.node?.sourceUrl;
+  const readingLabel =
+    typeof readingTime === "number" && readingTime > 0 ? `${readingTime} min read` : null;
+  const href = `/${post.__collection}/${post.slug}`;
+  const plainTitle = post.title?.replace(/<[^>]*>/g, "") ?? "Blog cover";
+  const cleanedExcerpt = (post.excerpt || "").replace("Table of Contents", "");
+
+  return (
+    <Link href={href} className="group block h-full">
+      <article className="h-full bg-white rounded-md border border-black/90 shadow-md shadow-neutral-900 hover:shadow-none transition-all duration-300 overflow-hidden hover:-translate-y-2 flex flex-col">
+        <div className="relative w-full aspect-video overflow-hidden">
+          {coverSrc ? (
+            <Image
+              src={coverSrc}
+              alt={plainTitle}
+              fill
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-white to-orange-100" />
+          )}
+        </div>
+        <div className="p-6 flex flex-col flex-1 gap-4">
+          <h3 className="text-xl md:text-2xl font-semibold text-gray-900 leading-snug">
+            <span
+              className="line-clamp-2 group-hover:text-orange-600 transition-colors duration-200"
+              dangerouslySetInnerHTML={{ __html: post.title }}
+            />
+          </h3>
+          <div
+            className="text-gray-600 text-sm md:text-base leading-relaxed line-clamp-2"
+            dangerouslySetInnerHTML={{ __html: getExcerpt(cleanedExcerpt, 24) }}
+          />
+          <div className="mt-auto flex items-center gap-1.5 text-xs md:text-sm text-gray-500 min-w-0">
+            <Image
+              src={authorImage}
+              alt={`${authorName} avatar`}
+              width={24}
+              height={24}
+              className="w-5 h-5 md:w-6 md:h-6 rounded-full flex-shrink-0"
+            />
+            <span className="font-semibold text-gray-900 truncate max-w-[120px] md:max-w-none">
+              {authorName}
+            </span>
+            <span className="text-gray-300 flex-shrink-0">•</span>
+            <span className="whitespace-nowrap flex-shrink-0">
+              <DateComponent dateString={post.date} />
+            </span>
+            {readingLabel && (
+              <>
+                <span className="text-gray-300 flex-shrink-0">•</span>
+                <span className="whitespace-nowrap flex-shrink-0">{readingLabel}</span>
+              </>
+            )}
+          </div>
+        </div>
+      </article>
+    </Link>
+  );
+}
+
+function LandingCompactBlogCard({
+  post,
+  readingTime,
+}: {
+  post: CategorizedPost;
+  readingTime?: number;
+}) {
+  const authorName = formatAuthorName(post.ppmaAuthorName);
+  const authorImage = resolveAuthorImage(post.ppmaAuthorImage);
+  const readingLabel =
+    typeof readingTime === "number" && readingTime > 0 ? `${readingTime} min read` : null;
+  const href = `/${post.__collection}/${post.slug}`;
+  const cleanedExcerpt = (post.excerpt || "").replace("Table of Contents", "");
+
+  return (
+    <Link href={href} className="group block h-full">
+      <article className="h-full bg-white rounded-md border border-black/90 shadow-md shadow-neutral-900 hover:shadow-none transition-all duration-300 overflow-hidden hover:-translate-y-2 flex flex-col">
+        <div className="p-6 flex flex-col flex-1 gap-4">
+          <h3 className="text-xl md:text-2xl font-semibold text-gray-900 leading-snug">
+            <span
+              className="line-clamp-2 group-hover:text-orange-600 transition-colors duration-200"
+              dangerouslySetInnerHTML={{ __html: post.title }}
+            />
+          </h3>
+          <div
+            className="text-gray-600 text-sm md:text-base leading-relaxed line-clamp-2"
+            dangerouslySetInnerHTML={{ __html: getExcerpt(cleanedExcerpt, 26) }}
+          />
+          <div className="mt-auto flex items-center gap-1.5 text-xs md:text-sm text-gray-500 min-w-0">
+            <Image
+              src={authorImage}
+              alt={`${authorName} avatar`}
+              width={24}
+              height={24}
+              className="w-5 h-5 md:w-6 md:h-6 rounded-full flex-shrink-0"
+            />
+            <span className="font-semibold text-gray-900 truncate max-w-[120px] md:max-w-none">
+              {authorName}
+            </span>
+            <span className="text-gray-300 flex-shrink-0">•</span>
+            <span className="whitespace-nowrap flex-shrink-0">
+              <DateComponent dateString={post.date} />
+            </span>
+            {readingLabel && (
+              <>
+                <span className="text-gray-300 flex-shrink-0">•</span>
+                <span className="whitespace-nowrap flex-shrink-0">{readingLabel}</span>
+              </>
+            )}
+          </div>
+        </div>
+      </article>
+    </Link>
+  );
+}
+
+function LandingFilterSelect({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const activeOption = options.find((option) => option.value === value);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="w-full relative" ref={containerRef}>
+      <button
+        type="button"
+        className={`relative w-full h-11 rounded-md border text-left px-4 pr-11 text-sm font-semibold transition-all flex items-center min-w-0 shadow-md shadow-neutral-900 text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-300 ${
+          isOpen
+            ? "border-orange-400 bg-orange-50 shadow-sm"
+            : "border-black/90 bg-white hover:border-black hover:bg-neutral-50 hover:shadow-sm"
+        }`}
+        onClick={() => setIsOpen((prev) => !prev)}
+      >
+        <span className="truncate flex-1 min-w-0">{activeOption?.label ?? label}</span>
+        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 flex-shrink-0">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M6 9l6 6 6-6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-black/90 rounded-md shadow-lg shadow-neutral-900 z-20 overflow-hidden">
+          <div className="max-h-48 overflow-y-auto py-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-slate-400">
+            {options.map((option) => {
+              const isActive = option.value === value;
+              return (
+                <button
+                  type="button"
+                  key={option.value}
+                  className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors truncate ${
+                    isActive
+                      ? "bg-orange-100 text-orange-700"
+                      : "text-slate-700 hover:bg-orange-50 hover:text-orange-600"
+                  }`}
+                  onClick={() => {
+                    onChange(option.value);
+                    setIsOpen(false);
+                  }}
+                  title={option.label}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LandingPaginationControls({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  const MAX_VISIBLE = 6;
+  const [windowStart, setWindowStart] = useState(1);
+  const maxWindowStart = Math.max(1, totalPages - MAX_VISIBLE + 1);
+
+  useEffect(() => {
+    const halfWindow = Math.floor(MAX_VISIBLE / 2);
+    let nextStart = Math.max(1, currentPage - halfWindow);
+    let nextEnd = Math.min(totalPages, nextStart + MAX_VISIBLE - 1);
+    nextStart = Math.max(1, nextEnd - MAX_VISIBLE + 1);
+    setWindowStart((prev) => (prev === nextStart ? prev : nextStart));
+  }, [currentPage, totalPages]);
+
+  if (totalPages <= 1) {
+    return null;
+  }
+
+  const windowEnd = Math.min(totalPages, windowStart + MAX_VISIBLE - 1);
+  const pageRange = Array.from({ length: windowEnd - windowStart + 1 }, (_, idx) => windowStart + idx);
+  const showLeadingFirst = windowStart > 1;
+  const showTrailingLast = windowEnd < totalPages;
+  const showLeftEllipsis = windowStart > 2;
+  const showRightEllipsis = windowEnd < totalPages - 1;
+
+  const shiftWindow = (direction: "prev" | "next") => {
+    setWindowStart((prev) => {
+      if (direction === "prev") {
+        return Math.max(1, prev - MAX_VISIBLE);
+      }
+      return Math.min(maxWindowStart, prev + MAX_VISIBLE);
+    });
+  };
+
+  const pageButtonClasses = (isActive: boolean) =>
+    `w-10 h-10 rounded-xl text-sm font-semibold flex items-center justify-center transition-all ${
+      isActive
+        ? "bg-orange-500 text-white shadow-[0_5px_14px_rgba(15,23,42,0.35)]"
+        : "bg-white border border-orange-100 text-slate-600 hover:text-orange-600 hover:border-orange-300 hover:shadow-[0_4px_10px_rgba(15,23,42,0.22)]"
+    }`;
+
+  const renderPageNode = (page: number) => {
+    const isActive = page === currentPage;
+    return (
+      <button
+        type="button"
+        key={`page-${page}`}
+        className={pageButtonClasses(isActive)}
+        onClick={() => onPageChange(page)}
+        disabled={isActive}
+        aria-current={isActive ? "page" : undefined}
+      >
+        {page}
+      </button>
+    );
+  };
+
+  const arrowClasses = (disabled: boolean) =>
+    `w-10 h-10 rounded-xl border text-base font-semibold flex items-center justify-center transition-all ${
+      disabled
+        ? "border-orange-50 text-slate-300 cursor-not-allowed"
+        : "border-orange-100 text-slate-600 hover:text-orange-600 hover:border-orange-300 hover:shadow-[0_4px_10px_rgba(15,23,42,0.2)]"
+    }`;
+
+  const renderArrow = (direction: "prev" | "next") => {
+    const isPrev = direction === "prev";
+    const targetPage = isPrev ? currentPage - 1 : currentPage + 1;
+    const isDisabled = isPrev ? currentPage <= 1 : currentPage >= totalPages;
+    const label = isPrev ? "Previous page" : "Next page";
+    const symbol = isPrev ? "←" : "→";
+
+    return (
+      <button
+        type="button"
+        key={direction}
+        className={arrowClasses(isDisabled)}
+        disabled={isDisabled}
+        onClick={() => onPageChange(Math.min(totalPages, Math.max(1, targetPage)))}
+        aria-label={label}
+      >
+        {symbol}
+      </button>
+    );
+  };
+
+  const EllipsisButton = ({ direction }: { direction: "prev" | "next" }) => (
+    <button
+      type="button"
+      className="w-10 h-10 rounded-xl text-xl font-semibold text-slate-400 hover:text-orange-600 hover:border-orange-300 border border-transparent hover:shadow-[0_4px_10px_rgba(15,23,42,0.2)] transition-all"
+      onClick={() => shiftWindow(direction)}
+      aria-label={direction === "prev" ? "Show previous pages" : "Show next pages"}
+    >
+      …
+    </button>
+  );
+
+  return (
+    <div className="flex flex-wrap justify-center items-center gap-2 mt-12 mb-16">
+      {renderArrow("prev")}
+      {showLeadingFirst && renderPageNode(1)}
+      {showLeftEllipsis && <EllipsisButton direction="prev" />}
+      {pageRange.map(renderPageNode)}
+      {showRightEllipsis && <EllipsisButton direction="next" />}
+      {showTrailingLast && renderPageNode(totalPages)}
+      {renderArrow("next")}
+    </div>
+  );
+}
+
 export const getStaticProps: GetStaticProps = async ({ preview = false }) => {
-  const allCommunityPosts = await getAllPostsForCommunity(preview);
-  const allTechnologyPosts = await getAllPostsForTechnology(preview);
-  const allTags = await getAllTags();
+  const [communityNodes, technologyNodes, allTags] = await Promise.all([
+    getAllCommunityPosts(preview),
+    getAllTechnologyPosts(preview),
+    getAllTags(),
+  ]);
+
+  const communityEdges = Array.isArray(communityNodes)
+    ? communityNodes.map((node) => ({ node }))
+    : [];
+  const technologyEdges = Array.isArray(technologyNodes)
+    ? technologyNodes.map((node) => ({ node }))
+    : [];
 
   return {
     props: {
-      communityPosts:
-        allCommunityPosts?.edges?.length > 3
-          ? allCommunityPosts?.edges?.slice(0, 3)
-          : allCommunityPosts?.edges ?? [],
-      technologyPosts:
-        allTechnologyPosts?.edges?.length > 3
-          ? allTechnologyPosts?.edges?.slice(0, 3)
-          : allTechnologyPosts?.edges ?? [],
+      communityPosts: communityEdges,
+      technologyPosts: technologyEdges,
       tags: Array.isArray(allTags) ? allTags : [],
       preview,
     },
-    revalidate: 10,
+    revalidate: 30,
   };
 };

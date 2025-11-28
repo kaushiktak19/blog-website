@@ -402,6 +402,27 @@ export async function getAllTechnologyPosts(preview = false) {
   return aggregatedPosts;
 }
 
+export async function getAllCommunityPosts(preview = false) {
+  let cursor: string | null = null;
+  let hasNextPage = true;
+  const aggregatedPosts: any[] = [];
+  const seenSlugs = new Set<string>();
+
+  while (hasNextPage) {
+    const { edges, pageInfo } = await getAllPostsForCommunity(preview, cursor);
+    const nodes = edges?.map((edge) => edge.node) ?? [];
+    for (const node of nodes) {
+      if (!node?.slug || seenSlugs.has(node.slug)) continue;
+      seenSlugs.add(node.slug);
+      aggregatedPosts.push(node);
+    }
+    hasNextPage = pageInfo?.hasNextPage ?? false;
+    cursor = pageInfo?.endCursor ?? null;
+  }
+
+  return aggregatedPosts;
+}
+
 
 export async function getAllPostsForCommunity(preview = false, after = null) {
   try {
