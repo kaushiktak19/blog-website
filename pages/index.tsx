@@ -145,9 +145,9 @@ export default function Index({
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-8 md:mb-10">
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-slate-900 leading-tight">
-              Keploy Blog
+              The Keploy Blog
             </h1>
-            <p className="mt-4 mb-6 text-3xl sm:text-4xl font-semibold leading-snug bg-gradient-to-r from-orange-500 via-orange-500 to-amber-400 bg-clip-text text-transparent">
+            <p className="mt-4 mb-6 p-1 text-3xl sm:text-4xl font-semibold leading-snug bg-gradient-to-r from-orange-500 via-orange-500 to-amber-400 bg-clip-text text-transparent">
               Engineering insights. Community voices. Real-world playbooks.
             </p>
             <p className="mx-auto max-w-3xl text-base sm:text-lg text-slate-600 leading-relaxed px-4">
@@ -155,7 +155,7 @@ export default function Index({
             </p>
           </div>
 
-          <div className="rounded-md border border-black/90 bg-white/95 p-5 sm:p-6 shadow-md shadow-neutral-900/40 backdrop-blur">
+          <div className="p-5 sm:p-6">
             <div className="grid gap-5 lg:gap-8 lg:grid-cols-2 items-stretch">
               <div className="flex h-full flex-col">
                 <div className="flex-1 flex flex-col">
