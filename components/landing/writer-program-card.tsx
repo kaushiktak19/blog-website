@@ -13,10 +13,10 @@ export default function LandingWriterProgramCard({ className = "" }: LandingWrit
       <div className="space-y-1">
         <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-orange-500">Writer program</p>
         <h3 className="text-base sm:text-lg font-bold leading-tight">
-          Share your engineering story with 50K+ builders
+          Share your engineering story with our builders
         </h3>
-        <p className="text-xs text-slate-700 leading-relaxed">
-          Pitch a topic, get paired with our editorial team, and showcase your learnings to the Keploy community.
+        <p className="text-sm text-slate-700 leading-relaxed">
+          Pitch a topic, pair with our editorial team, and showcase fresh learnings to mentors, contributors, and meetups across the Keploy community.
         </p>
       </div>
       <Link

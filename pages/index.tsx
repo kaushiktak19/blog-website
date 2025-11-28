@@ -143,14 +143,14 @@ export default function Index({
 
       <section className="relative z-10 px-4 sm:px-6 md:px-8 pt-10 pb-6 md:pt-14 md:pb-10">
         <div className="mx-auto max-w-6xl">
-          <div className="text-center mb-8 md:mb-10">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-slate-900 leading-tight">
-              The Keploy Blog
-            </h1>
-            <p className="mt-4 mb-6 p-1 text-3xl sm:text-4xl font-semibold leading-snug bg-gradient-to-r from-orange-500 via-orange-500 to-amber-400 bg-clip-text text-transparent">
-              Engineering insights. Community voices. Real-world playbooks.
-            </p>
-            <p className="mx-auto max-w-3xl text-base sm:text-lg text-slate-600 leading-relaxed px-4">
+            <div className="text-center mb-8 md:mb-10">
+              <h1 className="text-4xl mb-12 sm:text-6xl md:text-7xl lg:text-[5.5rem] font-bold text-slate-900 leading-wide">
+                The Keploy{" "}
+                <span className="bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 bg-clip-text text-transparent">
+                  Blog
+                </span>
+              </h1>
+              <p className="mx-auto p-1 max-w-xl text-base sm:text-lg text-slate-600 leading-relaxed px-4">
               {heroSubheading}
             </p>
           </div>
@@ -160,26 +160,15 @@ export default function Index({
               <div className="flex h-full flex-col">
                 <div className="flex-1 flex flex-col">
                   {activePost ? (
-                    <>
-                      <LandingLatestCard
-                        variant="visual"
-                        post={activePost}
-                        heading="Latest blogs"
-                        headingIcon={<Sparkles className="h-5 w-5 text-white" />}
-                        className={`transition-all duration-500 ${
-                          isAnimating ? "opacity-80 scale-[0.98]" : "opacity-100 scale-100"
-                        }`}
-                        basePath={activeBasePath}
-                      />
-                      <LandingLatestCard
-                        variant="details"
-                        post={activePost}
-                        className={`mt-4 transition-all duration-500 ${
-                          isAnimating ? "opacity-80 translate-y-1" : "opacity-100 translate-y-0"
-                        }`}
-                        basePath={activeBasePath}
-                      />
-                    </>
+                    <LandingLatestCard
+                      post={activePost}
+                      heading="Latest blogs"
+                      headingIcon={<Sparkles className="h-5 w-5 text-white" />}
+                      className={`transition-all duration-500 ${
+                        isAnimating ? "opacity-80 scale-[0.98]" : "opacity-100 scale-100"
+                      }`}
+                      basePath={activeBasePath}
+                    />
                   ) : (
                     <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-8 text-center text-slate-500">
                       No blogs available yet. Check back soon!
@@ -188,7 +177,7 @@ export default function Index({
                 </div>
 
                 {combinedLatest.length > 1 && (
-                  <div className="-mt-3 flex flex-wrap items-center justify-center gap-2 -translate-y-3">
+                  <div className="-mt-3 flex flex-wrap items-center justify-center gap-2 -translate-y-1.5">
                     {combinedLatest.map((post, index) => {
                       const isActive = index === activeIndex;
                       return (
