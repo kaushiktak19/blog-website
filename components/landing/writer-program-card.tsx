@@ -8,14 +8,16 @@ type LandingWriterProgramCardProps = {
 export default function LandingWriterProgramCard({ className = "" }: LandingWriterProgramCardProps) {
   return (
     <div
-      className={`relative flex flex-col justify-between overflow-hidden rounded-md border border-black/90 bg-[#fff4e8] text-slate-900 px-4 py-2.5 sm:px-5 sm:py-3.5 shadow-md shadow-neutral-900 min-h-[190px] ${className}`}
+      className={`relative flex flex-col justify-between overflow-hidden rounded-2xl border border-orange-100 bg-[#fff4e8] text-slate-900 px-4 py-2.5 sm:px-5 sm:py-3.5 shadow-[0_14px_45px_rgba(15,23,42,0.08)] min-h-[190px] ${className}`}
     >
       <div className="space-y-1">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-orange-500">Writer program</p>
-        <h3 className="text-base sm:text-lg font-bold leading-tight">
+        <p className="type-meta text-[11px] font-semibold uppercase tracking-[0.26em] text-orange-500">
+          Writer program
+        </p>
+        <h3 className="type-card-title text-base sm:text-lg font-bold leading-tight text-gray-800">
           Share your engineering story with our builders
         </h3>
-        <p className="text-sm text-slate-700 leading-relaxed">
+        <p className="type-card-excerpt text-sm text-slate-700 leading-relaxed">
           Pitch a topic, pair with our editorial team, and showcase fresh learnings to mentors, contributors, and meetups across the Keploy community.
         </p>
       </div>

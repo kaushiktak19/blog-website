@@ -30,65 +30,80 @@ export default function LandingLatestCard({
   const isCommunity = basePath === "/community";
 
   return (
-    <div className={`rounded-md border border-black/90 bg-white shadow-md shadow-neutral-900 overflow-hidden flex flex-col ${className}`}>
+    <div
+      className={`rounded-2xl bg-white/95 border border-orange-100 shadow-[0_18px_55px_rgba(15,23,42,0.08)] hover:border-orange-300 hover:shadow-[0_28px_85px_rgba(15,23,42,0.14)] overflow-hidden flex flex-col transition-all duration-300 ${className}`}
+    >
       {heading && (
-        <div className="bg-orange-500 px-4 py-3 flex items-center gap-2">
-          {headingIcon}
-          <span className="text-white font-semibold tracking-wide uppercase text-sm">{heading}</span>
+        <div className="bg-orange-500 px-4 py-3 flex items-center gap-2.5">
+          {headingIcon && (
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/15">
+              {headingIcon}
+            </span>
+          )}
+          <span className="font-heading text-white font-bold uppercase tracking-[0.3em] text-xs">
+            {heading}
+          </span>
         </div>
       )}
       <Link
         href={`${basePath}/${post.slug}`}
-        className="group flex flex-col gap-4 px-4 pb-4 pt-4 flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+        className="group flex flex-col gap-4 px-5 pb-5 pt-4 flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
         aria-label={`Read ${post.title}`}
       >
         {post.featuredImage && (
-          <div className="overflow-hidden rounded-sm w-full">
-            <CoverImage
-              title={post.title}
-              coverImage={post.featuredImage}
-              slug={undefined}
-              isCommunity={isCommunity}
-              imgClassName="w-full h-[320px] sm:h-[360px] object-cover object-center rounded-none transition-transform duration-500 group-hover:scale-[1.01]"
-            />
+          <div className="w-full overflow-hidden rounded-md bg-slate-100/60">
+            <div className="relative w-full h-[260px] sm:h-[320px] md:h-[360px]">
+              <CoverImage
+                title={post.title}
+                coverImage={post.featuredImage}
+                slug={undefined}
+                isCommunity={isCommunity}
+                containerClassName="w-full h-full"
+                imgClassName="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.01]"
+              />
+            </div>
           </div>
         )}
-        <div className="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
+        <div className="flex items-center gap-3 text-[0.8rem] md:text-[0.9rem] text-slate-600 min-w-0 whitespace-nowrap overflow-hidden">
           {post.ppmaAuthorImage && post.ppmaAuthorImage !== "imag1" && post.ppmaAuthorImage !== "image" ? (
             <Image
               src={post.ppmaAuthorImage}
               alt={`${post.ppmaAuthorName || "Author"}'s avatar`}
-              className="w-7 h-7 rounded-full flex-shrink-0"
-              height={28}
-              width={28}
+              className="w-9 h-9 rounded-full flex-shrink-0"
+              height={36}
+              width={36}
             />
           ) : (
             <Image
               src="/blog/images/author.png"
               alt="Author avatar"
-              className="w-7 h-7 rounded-full flex-shrink-0"
-              height={28}
-              width={28}
+              className="w-9 h-9 rounded-full flex-shrink-0"
+              height={36}
+              width={36}
             />
           )}
-          <span className="font-semibold text-gray-900 truncate">{post.ppmaAuthorName || "Anonymous"}</span>
-          <span className="text-gray-300 flex-shrink-0">•</span>
-          <span className="whitespace-nowrap flex-shrink-0">
+          <span className="font-heading font-semibold text-gray-700 tracking-tight truncate max-w-[150px] text-[0.98rem] md:text-[1.02rem]">
+            {post.ppmaAuthorName || "Anonymous"}
+          </span>
+          <span className="text-slate-300 flex-shrink-0">•</span>
+          <span className="whitespace-nowrap flex-shrink-0 text-[0.72rem] md:text-[0.8rem]">
             <DateComponent dateString={post.date} />
           </span>
-          {readingTime && readingTime > 0 && (
+          {readingTime !== undefined && readingTime > 0 && (
             <>
-              <span className="text-gray-300 flex-shrink-0">•</span>
-              <span className="whitespace-nowrap flex-shrink-0">{readingTime} min read</span>
+              <span className="text-slate-300 flex-shrink-0">•</span>
+              <span className="whitespace-nowrap flex-shrink-0 type-meta text-slate-500 text-[0.72rem] md:text-[0.8rem]">
+                {readingTime} min read
+              </span>
             </>
           )}
         </div>
         <h3
-          className="text-xl font-semibold text-card-foreground leading-snug transition-colors group-hover:text-orange-600"
+          className="type-card-title text-xl md:text-2xl text-gray-700 leading-snug transition-colors group-hover:text-orange-600 line-clamp-2"
           dangerouslySetInnerHTML={{ __html: post.title }}
         />
         <div
-          className="text-sm text-gray-600 leading-relaxed line-clamp-3"
+          className="type-card-excerpt text-[0.88rem] md:text-[0.95rem] leading-relaxed line-clamp-3 text-slate-600"
           dangerouslySetInnerHTML={{ __html: getExcerpt(cleanedExcerpt, 36) }}
         />
       </Link>

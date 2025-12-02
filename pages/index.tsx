@@ -383,21 +383,18 @@ export default function Index({
       <TechnologyBackground />
       <Header />
 
-      <section className="relative z-10 px-4 sm:px-6 md:px-8 pt-10 pb-6 md:pt-14 md:pb-10">
+      <section className="relative z-10 px-4 sm:px-6 pt-10 pb-10 md:pt-14 md:pb-12">
         <div className="mx-auto max-w-6xl">
-            <div className="text-center mb-8 md:mb-10">
-              <h1 className="text-4xl mb-12 sm:text-6xl md:text-7xl lg:text-[5.5rem] font-bold text-slate-900 leading-wide">
-                The Keploy{" "}
-                <span className="bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 bg-clip-text text-transparent">
-                  Blog
-                </span>
-              </h1>
-              <p className="mx-auto p-1 max-w-xl text-base sm:text-lg text-slate-600 leading-relaxed px-4">
+          <div className="text-center mb-10 md:mb-12">
+            <h1 className="type-hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl p-2 leading-wide tracking-wider bg-gradient-to-r from-orange-500 via-orange-500 to-amber-400 bg-clip-text text-transparent">
+              The Keploy Blog
+            </h1>
+            <p className="type-hero-body mx-auto mt-4 mb-4 max-w-xl text-base sm:text-xl text-slate-600 leading-relaxed px-4">
               {heroSubheading}
             </p>
           </div>
 
-          <div className="p-5 sm:p-6">
+          <div className="p-2 sm:p-4 md:p-5">
             <div className="grid gap-5 lg:gap-8 lg:grid-cols-2 items-stretch">
               <div className="flex h-full flex-col">
                 <div className="flex-1 flex flex-col">
@@ -419,7 +416,7 @@ export default function Index({
                 </div>
 
                 {combinedLatest.length > 1 && (
-                  <div className="-mt-3 flex flex-wrap items-center justify-center gap-2 -translate-y-1.5">
+                  <div className="-mt-6 flex flex-wrap items-center justify-center gap-2 -translate-y-5">
                     {combinedLatest.map((post, index) => {
                       const isActive = index === activeIndex;
                       return (
@@ -470,27 +467,37 @@ export default function Index({
         </div>
       </section>
 
-      <section className="mt-12 md:mt-16 w-full">
-        <Container>
-          <div className="relative">
-            <div className="pt-6 pb-10 md:pt-8 md:pb-12">
-              <div className="rounded-md border border-black/90 bg-white shadow-md shadow-neutral-900 px-5 py-6 md:px-8 md:py-7 transition-shadow hover:shadow-none">
-                <div className="flex flex-wrap gap-4 items-center">
-                  <div className="relative flex-[2] min-w-[260px]">
-                    <div className="relative rounded-md border border-black/90 bg-white shadow-md shadow-neutral-900 transition-all hover:shadow-sm focus-within:shadow-sm">
+      <Container>
+        <section className="mt-14 mb-12">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between mb-10 lg:gap-12">
+            <div className="flex-[1.1] min-w-[260px] lg:pr-6">
+              <h2 className="type-section-title relative inline-block whitespace-nowrap text-3xl md:text-4xl lg:text-[2.25rem] tracking-[-0.01em] leading-snug text-gray-700 text-left">
+                <span className="relative z-10">All blogs</span>
+                <span className="absolute inset-x-0 bottom-0 h-3 bg-gradient-to-r from-orange-200/80 to-orange-100/80 -z-0" />
+              </h2>
+              <span className="sr-only" aria-live="polite">
+                {`${browseHeading}. ${filteredPosts.length} results match the current filters`}
+              </span>
+            </div>
+
+            <div className="w-full lg:flex-[1] mt-2 lg:mt-0">
+              <div className="rounded-2xl border border-slate-200/70 bg-white px-3.5 py-3.5 shadow-[0_14px_45px_rgba(15,23,42,0.08)]">
+                <div className="flex flex-wrap gap-2.5 lg:gap-3 items-center lg:flex-nowrap lg:justify-end">
+                  <div className="relative flex-1 min-w-[200px] lg:max-w-[240px]">
+                    <div className="relative h-11 rounded-2xl border border-slate-200 bg-white transition-all focus-within:border-orange-300 focus-within:ring-1 focus-within:ring-orange-200 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
                       <input
                         type="text"
-                        placeholder="Search technology & community posts..."
+                        placeholder="Search blogs..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full h-11 pl-12 pr-10 rounded-md bg-white text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300 transition-all placeholder:text-slate-400"
+                        className="w-full h-full pl-9 pr-8 rounded-2xl bg-transparent text-sm font-medium text-slate-900 focus:outline-none placeholder:text-slate-400"
                       />
-                      <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400/80 pointer-events-none w-[18px] h-[18px]" />
+                      <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-400/80 pointer-events-none w-[16px] h-[16px]" />
                       {searchTerm && (
                         <button
                           type="button"
                           onClick={() => setSearchTerm("")}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center"
                           aria-label="Clear search"
                         >
                           <FaTimes className="w-4 h-4" />
@@ -499,79 +506,67 @@ export default function Index({
                     </div>
                   </div>
 
-                  <div className="flex-[0.8] min-w-[140px]">
-                    <LandingFilterSelect
-                      label="Author"
-                      value={selectedAuthor}
-                      onChange={setSelectedAuthor}
-                      options={authors.map((author) => ({
-                        value: author,
-                        label: author === "all" ? "All authors" : author,
-                      }))}
-                    />
+                  <div className="flex flex-wrap gap-2.5 w-full lg:w-auto lg:flex-nowrap">
+                    <div className="flex-[0.9] min-w-[110px]">
+                      <LandingFilterSelect
+                        label="Author"
+                        value={selectedAuthor}
+                        onChange={setSelectedAuthor}
+                        options={authors.map((author) => ({
+                          value: author,
+                          label: author === "all" ? "All authors" : author,
+                        }))}
+                      />
+                    </div>
+
+                    <div className="flex-[0.9] min-w-[110px]">
+                      <LandingFilterSelect
+                        label="Blogs"
+                        value={collectionFilter}
+                        onChange={(value) => setCollectionFilter(value as CollectionFilter)}
+                        options={BLOG_COLLECTION_OPTIONS}
+                      />
+                    </div>
+
+                    <div className="flex-[0.9] min-w-[110px]">
+                      <LandingFilterSelect
+                        label="Published"
+                        value={dateFilter}
+                        onChange={setDateFilter}
+                        options={DATE_FILTERS}
+                      />
+                    </div>
+
+                    <div className="flex-[0.9] min-w-[110px]">
+                      <LandingFilterSelect
+                        label="Sort"
+                        value={sortOption}
+                        onChange={setSortOption}
+                        options={SORT_OPTIONS}
+                      />
+                    </div>
+
+                    <div className="flex-[0.9] min-w-[110px]">
+                      <LandingFilterSelect
+                        label="View mode"
+                        value={viewMode}
+                        onChange={(value) => setViewMode(value as ViewMode)}
+                        options={VIEW_OPTIONS}
+                      />
+                    </div>
                   </div>
 
-                  <div className="flex-[0.8] min-w-[150px]">
-                    <LandingFilterSelect
-                      label="Blogs"
-                      value={collectionFilter}
-                      onChange={(value) => setCollectionFilter(value as CollectionFilter)}
-                      options={BLOG_COLLECTION_OPTIONS}
-                    />
+                  <div className="w-full lg:w-auto lg:ml-2">
+                    <button
+                      type="button"
+                      onClick={resetFilters}
+                      className="w-full lg:w-auto h-11 px-5 rounded-2xl border border-slate-200 bg-white text-sm font-medium text-slate-700 transition-all hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 focus-visible:ring-2 focus-visible:ring-orange-200 shadow-[0_10px_30px_rgba(15,23,42,0.04)]"
+                    >
+                      Reset
+                    </button>
                   </div>
-
-                  <div className="flex-[0.8] min-w-[130px]">
-                    <LandingFilterSelect
-                      label="Published"
-                      value={dateFilter}
-                      onChange={setDateFilter}
-                      options={DATE_FILTERS}
-                    />
-                  </div>
-
-                  <div className="flex-[0.8] min-w-[130px]">
-                    <LandingFilterSelect
-                      label="Sort"
-                      value={sortOption}
-                      onChange={setSortOption}
-                      options={SORT_OPTIONS}
-                    />
-                  </div>
-
-                  <div className="flex-[0.8] min-w-[140px]">
-                    <LandingFilterSelect
-                      label="View mode"
-                      value={viewMode}
-                      onChange={(value) => setViewMode(value as ViewMode)}
-                      options={VIEW_OPTIONS}
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={resetFilters}
-                    className="shrink-0 h-11 px-6 rounded-md border border-black/90 bg-white text-sm font-semibold text-orange-600 shadow-md shadow-neutral-900 transition-all hover:bg-neutral-50 hover:border-orange-400 hover:text-orange-700 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-orange-300"
-                  >
-                    Reset all
-                  </button>
                 </div>
               </div>
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      <Container>
-        <section className="mt-16 mb-12">
-          <div className="flex items-start justify-between flex-wrap gap-4 mb-8">
-            <div>
-              <p className="text-sm uppercase tracking-widest text-orange-500 mb-2">
-                Browse
-              </p>
-              <h2 className="text-3xl md:text-4xl font-semibold text-left">{browseHeading}</h2>
-              <span className="sr-only" aria-live="polite">
-                {`${filteredPosts.length} results match the current filters`}
-              </span>
             </div>
           </div>
 
@@ -589,10 +584,11 @@ export default function Index({
                   date={post.date}
                   author={post.ppmaAuthorName}
                   slug={post.slug}
-                  excerpt={getExcerpt(post.excerpt, 20)}
+                  excerpt={getExcerpt(post.excerpt, 36)}
                   isCommunity={post.__collection === "community"}
                   authorImage={post.ppmaAuthorImage}
                   readingTime={readingTime}
+                  variant="subtle"
                 />
               ))}
             </PostGrid>
@@ -603,7 +599,7 @@ export default function Index({
                   key={post.slug}
                   post={post}
                   isCommunity={post.__collection === "community"}
-                  excerptOverride={getExcerpt(post.excerpt, 42)}
+                  excerptOverride={getExcerpt(post.excerpt, 110)}
                   readingTime={readingTime}
                 />
               ))}
@@ -650,17 +646,16 @@ function LandingFeaturedBlogCard({
   const readingLabel =
     typeof readingTime === "number" && readingTime > 0 ? `${readingTime} min read` : null;
   const href = `/${post.__collection}/${post.slug}`;
-  const plainTitle = post.title?.replace(/<[^>]*>/g, "") ?? "Blog cover";
   const cleanedExcerpt = (post.excerpt || "").replace("Table of Contents", "");
 
   return (
     <Link href={href} className="group block h-full">
-      <article className="h-full bg-white rounded-md border border-black/90 shadow-md shadow-neutral-900 hover:shadow-none transition-all duration-300 overflow-hidden hover:-translate-y-2 flex flex-col">
+      <article className="h-full rounded-2xl bg-white/95 border border-orange-100 shadow-[0_18px_55px_rgba(15,23,42,0.08)] transition-all duration-300 overflow-hidden hover:border-orange-300 hover:-translate-y-1.5 hover:shadow-[0_28px_85px_rgba(15,23,42,0.14)] flex flex-col">
         <div className="relative w-full aspect-video overflow-hidden">
           {coverSrc ? (
             <Image
               src={coverSrc}
-              alt={plainTitle}
+              alt={post.title?.replace(/<[^>]*>/g, "") ?? "Blog cover"}
               fill
               sizes="(max-width: 768px) 100vw, 33vw"
               className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
@@ -669,36 +664,38 @@ function LandingFeaturedBlogCard({
             <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-white to-orange-100" />
           )}
         </div>
-        <div className="p-6 flex flex-col flex-1 gap-4">
-          <h3 className="text-xl md:text-2xl font-semibold text-gray-900 leading-snug">
+        <div className="px-6 pt-5 pb-6 flex flex-col flex-1 gap-3.5">
+          <h3 className="type-card-title text-xl md:text-2xl text-gray-700 leading-snug">
             <span
               className="line-clamp-2 group-hover:text-orange-600 transition-colors duration-200"
               dangerouslySetInnerHTML={{ __html: post.title }}
             />
           </h3>
           <div
-            className="text-gray-600 text-sm md:text-base leading-relaxed line-clamp-2"
-            dangerouslySetInnerHTML={{ __html: getExcerpt(cleanedExcerpt, 24) }}
+            className="type-card-excerpt text-[0.88rem] md:text-[0.95rem] text-slate-600 leading-relaxed line-clamp-2"
+            dangerouslySetInnerHTML={{ __html: getExcerpt(cleanedExcerpt, 34) }}
           />
-          <div className="mt-auto flex items-center gap-1.5 text-xs md:text-sm text-gray-500 min-w-0">
+          <div className="mt-auto flex items-center gap-3 text-[0.8rem] md:text-[0.9rem] text-slate-600 min-w-0 whitespace-nowrap overflow-hidden">
             <Image
               src={authorImage}
               alt={`${authorName} avatar`}
-              width={24}
-              height={24}
-              className="w-5 h-5 md:w-6 md:h-6 rounded-full flex-shrink-0"
+              width={36}
+              height={36}
+              className="w-9 h-9 rounded-full flex-shrink-0"
             />
-            <span className="font-semibold text-gray-900 truncate max-w-[120px] md:max-w-none">
+            <span className="font-heading font-semibold text-gray-700 tracking-tight truncate max-w-[150px] md:max-w-none text-[0.98rem] md:text-[1.02rem]">
               {authorName}
             </span>
-            <span className="text-gray-300 flex-shrink-0">•</span>
-            <span className="whitespace-nowrap flex-shrink-0">
+            <span className="text-slate-300 flex-shrink-0">•</span>
+            <span className="whitespace-nowrap flex-shrink-0 text-[0.72rem] md:text-[0.8rem]">
               <DateComponent dateString={post.date} />
             </span>
             {readingLabel && (
               <>
-                <span className="text-gray-300 flex-shrink-0">•</span>
-                <span className="whitespace-nowrap flex-shrink-0">{readingLabel}</span>
+                <span className="text-slate-300 flex-shrink-0">•</span>
+                <span className="whitespace-nowrap flex-shrink-0 type-meta text-slate-500 text-[0.72rem] md:text-[0.8rem]">
+                  {readingLabel}
+                </span>
               </>
             )}
           </div>
@@ -724,37 +721,39 @@ function LandingCompactBlogCard({
 
   return (
     <Link href={href} className="group block h-full">
-      <article className="h-full bg-white rounded-md border border-black/90 shadow-md shadow-neutral-900 hover:shadow-none transition-all duration-300 overflow-hidden hover:-translate-y-2 flex flex-col">
-        <div className="p-6 flex flex-col flex-1 gap-4">
-          <h3 className="text-xl md:text-2xl font-semibold text-gray-900 leading-snug">
+      <article className="h-full rounded-2xl bg-white/95 border border-orange-100 shadow-[0_18px_55px_rgba(15,23,42,0.08)] transition-all duration-300 overflow-hidden hover:border-orange-300 hover:-translate-y-1.5 hover:shadow-[0_28px_85px_rgba(15,23,42,0.14)] flex flex-col">
+        <div className="px-6 pt-5 pb-6 flex flex-col flex-1 gap-3.5">
+          <h3 className="type-card-title text-xl md:text-2xl text-gray-700 leading-snug">
             <span
               className="line-clamp-2 group-hover:text-orange-600 transition-colors duration-200"
               dangerouslySetInnerHTML={{ __html: post.title }}
             />
           </h3>
           <div
-            className="text-gray-600 text-sm md:text-base leading-relaxed line-clamp-2"
-            dangerouslySetInnerHTML={{ __html: getExcerpt(cleanedExcerpt, 26) }}
+            className="type-card-excerpt text-[0.88rem] md:text-[0.95rem] text-slate-600 leading-relaxed line-clamp-2"
+            dangerouslySetInnerHTML={{ __html: getExcerpt(cleanedExcerpt, 34) }}
           />
-          <div className="mt-auto flex items-center gap-1.5 text-xs md:text-sm text-gray-500 min-w-0">
+          <div className="mt-auto flex items-center gap-3 text-[0.8rem] md:text-[0.9rem] text-slate-600 min-w-0 whitespace-nowrap overflow-hidden">
             <Image
               src={authorImage}
               alt={`${authorName} avatar`}
-              width={24}
-              height={24}
-              className="w-5 h-5 md:w-6 md:h-6 rounded-full flex-shrink-0"
+              width={36}
+              height={36}
+              className="w-9 h-9 rounded-full flex-shrink-0"
             />
-            <span className="font-semibold text-gray-900 truncate max-w-[120px] md:max-w-none">
+            <span className="font-heading font-semibold text-gray-700 tracking-tight truncate max-w-[150px] md:max-w-none text-[0.98rem] md:text-[1.02rem]">
               {authorName}
             </span>
-            <span className="text-gray-300 flex-shrink-0">•</span>
-            <span className="whitespace-nowrap flex-shrink-0">
+            <span className="text-slate-300 flex-shrink-0">•</span>
+            <span className="whitespace-nowrap flex-shrink-0 text-[0.72rem] md:text-[0.8rem]">
               <DateComponent dateString={post.date} />
             </span>
             {readingLabel && (
               <>
-                <span className="text-gray-300 flex-shrink-0">•</span>
-                <span className="whitespace-nowrap flex-shrink-0">{readingLabel}</span>
+                <span className="text-slate-300 flex-shrink-0">•</span>
+                <span className="whitespace-nowrap flex-shrink-0 type-meta text-slate-500 text-[0.72rem] md:text-[0.8rem]">
+                  {readingLabel}
+                </span>
               </>
             )}
           </div>
@@ -794,10 +793,10 @@ function LandingFilterSelect({
     <div className="w-full relative" ref={containerRef}>
       <button
         type="button"
-        className={`relative w-full h-11 rounded-md border text-left px-4 pr-11 text-sm font-semibold transition-all flex items-center min-w-0 shadow-md shadow-neutral-900 text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-300 ${
+        className={`relative w-full h-11 rounded-2xl border text-left px-3.5 pr-9 text-sm font-medium flex items-center min-w-0 text-slate-900 focus:outline-none focus:ring-1 focus:ring-orange-200 transition-colors ${
           isOpen
-            ? "border-orange-400 bg-orange-50 shadow-sm"
-            : "border-black/90 bg-white hover:border-black hover:bg-neutral-50 hover:shadow-sm"
+            ? "border-orange-300 bg-orange-50"
+            : "border-slate-200 bg-white hover:border-orange-200 hover:bg-orange-50/40"
         }`}
         onClick={() => setIsOpen((prev) => !prev)}
       >
@@ -816,7 +815,7 @@ function LandingFilterSelect({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-black/90 rounded-md shadow-lg shadow-neutral-900 z-20 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-sm z-20 overflow-hidden">
           <div className="max-h-48 overflow-y-auto py-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-slate-400">
             {options.map((option) => {
               const isActive = option.value === value;
@@ -824,7 +823,7 @@ function LandingFilterSelect({
                 <button
                   type="button"
                   key={option.value}
-                  className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors truncate ${
+                  className={`w-full text-left px-4 py-2.5 text-sm font-medium tracking-tight transition-colors truncate ${
                     isActive
                       ? "bg-orange-100 text-orange-700"
                       : "text-slate-700 hover:bg-orange-50 hover:text-orange-600"

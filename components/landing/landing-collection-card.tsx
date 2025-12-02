@@ -62,10 +62,10 @@ export default function LandingCollectionCard({
   return (
     <Link
       href={href}
-      className={`group relative flex flex-col rounded-md border border-black/90 bg-gradient-to-br ${accentConfig.gradient} px-4 py-3 sm:px-5 sm:py-4 shadow-md shadow-neutral-900 transition-all duration-300 hover:-translate-y-1 hover:shadow-neutral-900/60 ${className}`}
+      className={`group relative flex flex-col rounded-2xl border border-orange-100 bg-gradient-to-br ${accentConfig.gradient} px-4 py-3 sm:px-5 sm:py-4 shadow-[0_18px_55px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1.5 hover:border-orange-300 hover:shadow-[0_26px_80px_rgba(15,23,42,0.14)] ${className}`}
       aria-label={`Browse ${accentConfig.badge} blogs`}
     >
-      <div className="relative mb-3 h-32 rounded-sm overflow-hidden">
+      <div className="relative mb-3 h-32 rounded-xl overflow-hidden bg-slate-100/60">
         {validImages.length > 0 ? (
           <Image
             src={validImages[activeIndex]}
@@ -81,9 +81,18 @@ export default function LandingCollectionCard({
       </div>
       <div className="flex items-center gap-2">
         {accentConfig.icon}
-        <p className="text-sm font-semibold uppercase tracking-wide text-slate-600">{accentConfig.badge}</p>
+        <p className="type-meta text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">
+          {accentConfig.badge}
+        </p>
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-slate-600 flex-1 line-clamp-3">{description}</p>
+      <p className="mt-2 text-sm leading-relaxed text-slate-600 flex-1 line-clamp-3">
+        {title && (
+          <span className="block font-heading text-[0.96rem] md:text-[1.02rem] text-gray-800 mb-1.5">
+            {title}
+          </span>
+        )}
+        {description}
+      </p>
     </Link>
   );
 }

@@ -33,11 +33,13 @@ export default function LandingTagsCard({
 }: LandingTagsCardProps) {
   return (
     <div
-      className={`rounded-md border border-black/90 bg-white px-4 py-2.5 sm:px-5 sm:py-3.5 shadow-md shadow-neutral-900 flex flex-col h-full ${className}`}
+      className={`rounded-2xl border border-orange-100 bg-white/95 px-4 py-2.5 sm:px-5 sm:py-3.5 shadow-[0_14px_45px_rgba(15,23,42,0.08)] flex flex-col h-full ${className}`}
     >
       <div className="flex items-center gap-2">
         <TagIcon className="h-4 w-4 text-orange-500" />
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Trending tags</p>
+        <p className="type-meta text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
+          Trending tags
+        </p>
       </div>
       <div className="mt-2.5 flex flex-wrap gap-2">
         {tags.length === 0 ? (
