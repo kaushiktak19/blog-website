@@ -8,13 +8,13 @@ type LandingWriterProgramCardProps = {
 export default function LandingWriterProgramCard({ className = "" }: LandingWriterProgramCardProps) {
   return (
     <div
-      className={`relative flex flex-col justify-between overflow-hidden rounded-2xl border border-orange-100 bg-[#fff7ec] text-slate-900 px-5 py-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)] min-h-[190px] ${className}`}
+      className={`relative flex flex-col justify-between overflow-hidden rounded-2xl border border-orange-100 bg-[#fff8f0] text-slate-900 px-5 py-5 shadow-[0_6px_18px_rgba(15,23,42,0.05)] min-h-[190px] ${className}`}
     >
       <div className="space-y-1">
         <p className="type-meta text-[11px] font-semibold uppercase tracking-[0.26em] text-orange-500">
           Writers program
         </p>
-        <h3 className="type-card-title text-base sm:text-lg font-bold leading-tight text-gray-800">
+        <h3 className="type-card-title text-base sm:text-lg font-semibold leading-tight text-gray-900">
           Share your engineering story with our builders
         </h3>
         <p className="type-card-excerpt text-[0.86rem] md:text-[0.93rem] text-slate-700 leading-relaxed">

@@ -65,7 +65,7 @@ const SORT_OPTIONS = [
 const VIEW_OPTIONS: { value: ViewMode; label: string }[] = [
   { value: "grid", label: "Detailed view" },
   { value: "list", label: "List view" },
-  { value: "featured", label: "Featured view" },
+  { value: "featured", label: "Highlight view" },
   { value: "compact", label: "Compact view" },
 ];
 
@@ -213,7 +213,7 @@ export default function Index({
   const [selectedAuthor, setSelectedAuthor] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
   const [sortOption, setSortOption] = useState("newest");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("featured");
   const [collectionFilter, setCollectionFilter] = useState<CollectionFilter>("all");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -386,7 +386,7 @@ export default function Index({
       <section className="relative z-10 px-4 sm:px-6 pt-10 pb-10 md:pt-14 md:pb-12">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-10 md:mb-12">
-            <h1 className="type-hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl p-2 leading-wide tracking-wider bg-[linear-gradient(120deg,_#fdba74_0,_#fb923c_28%,_#f97316_55%,_#ea580c_80%,_#7c2d12_100%)] bg-clip-text text-transparent">
+            <h1 className="type-hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.5rem] p-2 leading-tight tracking-wider bg-[linear-gradient(120deg,_#fdba74_0,_#fb923c_28%,_#f97316_55%,_#ea580c_80%,_#7c2d12_100%)] bg-clip-text text-transparent">
               The Keploy Blog
             </h1>
             <p className="type-hero-body mx-auto mt-4 mb-4 max-w-xl text-base sm:text-xl text-slate-600 leading-relaxed px-4">
@@ -403,10 +403,13 @@ export default function Index({
                       post={activePost}
                       heading="Latest blogs"
                       headingIcon={<Sparkles className="h-5 w-5 text-white" />}
-                      className={`transition-all duration-500 ${
+                      className={`h-full transition-all duration-500 ${
                         isAnimating ? "opacity-80 scale-[0.98]" : "opacity-100 scale-100"
                       }`}
                       basePath={activeBasePath}
+                      dotsCount={combinedLatest.length}
+                      activeIndex={activeIndex}
+                      onDotClick={handleManualSelection}
                     />
                   ) : (
                     <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-8 text-center text-slate-500">
@@ -414,30 +417,6 @@ export default function Index({
                     </div>
                   )}
                 </div>
-
-                {combinedLatest.length > 1 && (
-                  <div className="-mt-6 flex flex-wrap items-center justify-center gap-2 -translate-y-8">
-                    {combinedLatest.map((post, index) => {
-                      const isActive = index === activeIndex;
-                      return (
-                        <button
-                          key={post.slug ?? index}
-                          onClick={() => handleManualSelection(index)}
-                          className={`rounded-full transition-all duration-300 ${
-                            isActive
-                              ? "bg-orange-500"
-                              : "bg-orange-500/30 hover:bg-orange-500/60"
-                          }`}
-                          style={{
-                            width: isActive ? "1.75rem" : "0.75rem",
-                            height: "0.75rem",
-                          }}
-                          aria-label={`View blog ${index + 1}`}
-                        />
-                      );
-                    })}
-                  </div>
-                )}
               </div>
 
               <div className="grid h-full gap-5 lg:grid-rows-[0.28fr_1fr_0.72fr]">
@@ -665,16 +644,12 @@ function LandingFeaturedBlogCard({
           )}
         </div>
         <div className="px-6 pt-5 pb-6 flex flex-col flex-1 gap-3.5">
-          <h3 className="type-card-title text-xl md:text-2xl text-gray-700 leading-snug">
+          <h3 className="type-card-title text-xl md:text-2xl text-gray-700">
             <span
               className="line-clamp-2 group-hover:text-orange-600 transition-colors duration-200"
               dangerouslySetInnerHTML={{ __html: post.title }}
             />
           </h3>
-          <div
-            className="type-card-excerpt text-[0.88rem] md:text-[0.95rem] text-slate-600 leading-relaxed line-clamp-2"
-            dangerouslySetInnerHTML={{ __html: getExcerpt(cleanedExcerpt, 34) }}
-          />
           <div className="mt-auto flex items-center gap-2 text-[0.7rem] md:text-[0.75rem] text-slate-600 min-w-0 whitespace-nowrap overflow-hidden">
             <Image
               src={authorImage}
@@ -693,7 +668,9 @@ function LandingFeaturedBlogCard({
             {readingLabel && (
               <>
                 <span className="text-slate-300 flex-shrink-0 -mx-0.5">•</span>
-                <span className="whitespace-nowrap flex-shrink-0 type-meta text-slate-500 text-[0.68rem] md:text-[0.72rem] tracking-tight">{readingLabel}</span>
+                <span className="whitespace-nowrap flex-shrink-0 type-meta text-slate-500 text-[0.68rem] md:text-[0.72rem] tracking-tight">
+                  {readingLabel}
+                </span>
               </>
             )}
           </div>

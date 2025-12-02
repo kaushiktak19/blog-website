@@ -16,6 +16,9 @@ type LandingLatestCardProps = {
   headingIcon?: ReactNode;
   className?: string;
   basePath: "/technology" | "/community";
+  dotsCount?: number;
+  activeIndex?: number;
+  onDotClick?: (index: number) => void;
 };
 
 export default function LandingLatestCard({
@@ -24,6 +27,9 @@ export default function LandingLatestCard({
   headingIcon,
   className = "",
   basePath,
+  dotsCount,
+  activeIndex,
+  onDotClick,
 }: LandingLatestCardProps) {
   const readingTime = post.content ? 5 + calculateReadingTime(post.content) : undefined;
   const cleanedExcerpt = (post.excerpt || "").replace("Table of Contents", "");
@@ -103,10 +109,32 @@ export default function LandingLatestCard({
           dangerouslySetInnerHTML={{ __html: post.title }}
         />
         <div
-          className="type-card-excerpt text-[0.88rem] md:text-[0.95rem] leading-relaxed line-clamp-3 text-slate-600"
+          className="type-card-excerpt text-[0.88rem] md:text-[0.95rem] leading-relaxed line-clamp-3 text-slate-600 mb-3.5"
           dangerouslySetInnerHTML={{ __html: getExcerpt(cleanedExcerpt, 36) }}
         />
       </Link>
+      {typeof dotsCount === "number" && dotsCount > 1 && typeof activeIndex === "number" && onDotClick && (
+        <div className="flex items-center justify-center gap-2 pb-5 pt-3">
+          {Array.from({ length: dotsCount }, (_, index) => {
+            const isActive = index === activeIndex;
+            return (
+              <button
+                key={index}
+                type="button"
+                onClick={() => onDotClick(index)}
+                className={`rounded-full transition-all duration-300 ${
+                  isActive ? "bg-orange-500" : "bg-orange-500/30 hover:bg-orange-500/60"
+                }`}
+                style={{
+                  width: isActive ? "1.75rem" : "0.75rem",
+                  height: "0.75rem",
+                }}
+                aria-label={`View blog ${index + 1}`}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

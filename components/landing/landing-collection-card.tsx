@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Layers, Users } from "lucide-react";
+import { Cpu, Users2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 type Accent = "technology" | "community";
@@ -20,13 +20,21 @@ const accentMap: Record<
 > = {
   technology: {
     badge: "Technology",
-    icon: <Layers className="h-5 w-5 text-orange-500" />,
+    icon: (
+      <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/80 shadow-[0_2px_6px_rgba(15,23,42,0.08)]">
+        <Cpu className="h-4 w-4 text-orange-500" />
+      </span>
+    ),
     gradient: "from-orange-100 via-white to-white border-orange-200",
     fallback: "bg-gradient-to-br from-orange-200/60 via-white to-amber-100/70",
   },
   community: {
     badge: "Community",
-    icon: <Users className="h-5 w-5 text-rose-500" />,
+    icon: (
+      <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/80 shadow-[0_2px_6px_rgba(15,23,42,0.08)]">
+        <Users2 className="h-4 w-4 text-rose-500" />
+      </span>
+    ),
     gradient: "from-rose-50 via-white to-white border-rose-200",
     fallback: "bg-gradient-to-br from-rose-200/50 via-white to-pink-100/70",
   },
@@ -79,9 +87,9 @@ export default function LandingCollectionCard({
           <div className={`h-full w-full ${accentConfig.fallback}`} />
         )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2.5">
         {accentConfig.icon}
-        <p className="type-meta text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">
+        <p className="type-meta text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-700">
           {accentConfig.badge}
         </p>
       </div>
