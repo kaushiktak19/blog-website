@@ -62,10 +62,10 @@ export default function LandingCollectionCard({
   return (
     <Link
       href={href}
-      className={`group relative flex flex-col rounded-2xl border border-orange-100 bg-gradient-to-br ${accentConfig.gradient} px-4 py-3 sm:px-5 sm:py-4 shadow-[0_18px_55px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1.5 hover:border-orange-300 hover:shadow-[0_26px_80px_rgba(15,23,42,0.14)] ${className}`}
+      className={`group relative flex flex-col rounded-2xl border border-orange-100 bg-gradient-to-br ${accentConfig.gradient} px-5 py-5 shadow-[0_18px_55px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1.5 hover:border-orange-300 hover:shadow-[0_26px_80px_rgba(15,23,42,0.14)] ${className}`}
       aria-label={`Browse ${accentConfig.badge} blogs`}
     >
-      <div className="relative mb-3 h-32 rounded-xl overflow-hidden bg-slate-100/60">
+      <div className="relative mb-4 h-32 rounded-xl overflow-hidden bg-slate-100/60">
         {validImages.length > 0 ? (
           <Image
             src={validImages[activeIndex]}
@@ -85,9 +85,9 @@ export default function LandingCollectionCard({
           {accentConfig.badge}
         </p>
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-slate-600 flex-1 line-clamp-3">
+      <p className="mt-2.5 text-[0.86rem] md:text-[0.93rem] leading-relaxed text-slate-600 flex-1 line-clamp-3">
         {title && (
-          <span className="block font-heading text-[0.96rem] md:text-[1.02rem] text-gray-800 mb-1.5">
+          <span className="block font-heading text-[0.94rem] md:text-[1rem] text-gray-800 mb-1">
             {title}
           </span>
         )}

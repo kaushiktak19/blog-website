@@ -33,7 +33,7 @@ export default function LandingTagsCard({
 }: LandingTagsCardProps) {
   return (
     <div
-      className={`rounded-2xl border border-orange-100 bg-white/95 px-4 py-2.5 sm:px-5 sm:py-3.5 shadow-[0_14px_45px_rgba(15,23,42,0.08)] flex flex-col h-full ${className}`}
+      className={`rounded-2xl border border-orange-100 bg-white/95 px-5 py-5 shadow-[0_14px_45px_rgba(15,23,42,0.08)] flex flex-col h-full ${className}`}
     >
       <div className="flex items-center gap-2">
         <TagIcon className="h-4 w-4 text-orange-500" />

@@ -416,7 +416,7 @@ export default function Index({
                 </div>
 
                 {combinedLatest.length > 1 && (
-                  <div className="-mt-6 flex flex-wrap items-center justify-center gap-2 -translate-y-5">
+                  <div className="-mt-6 flex flex-wrap items-center justify-center gap-2 -translate-y-8">
                     {combinedLatest.map((post, index) => {
                       const isActive = index === activeIndex;
                       return (
@@ -468,7 +468,7 @@ export default function Index({
       </section>
 
       <Container>
-        <section className="mt-14 mb-12">
+        <section className="mt-10 mb-14">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between mb-10 lg:gap-12">
             <div className="flex-[1.1] min-w-[260px] lg:pr-6">
               <h2 className="type-section-title relative inline-block whitespace-nowrap text-3xl md:text-4xl lg:text-[2.25rem] tracking-[-0.01em] leading-snug text-gray-700 text-left">
@@ -675,7 +675,7 @@ function LandingFeaturedBlogCard({
             className="type-card-excerpt text-[0.88rem] md:text-[0.95rem] text-slate-600 leading-relaxed line-clamp-2"
             dangerouslySetInnerHTML={{ __html: getExcerpt(cleanedExcerpt, 34) }}
           />
-          <div className="mt-auto flex items-center gap-3 text-[0.8rem] md:text-[0.9rem] text-slate-600 min-w-0 whitespace-nowrap overflow-hidden">
+          <div className="mt-auto flex items-center gap-2 text-[0.7rem] md:text-[0.75rem] text-slate-600 min-w-0 whitespace-nowrap overflow-hidden">
             <Image
               src={authorImage}
               alt={`${authorName} avatar`}
@@ -683,19 +683,17 @@ function LandingFeaturedBlogCard({
               height={36}
               className="w-9 h-9 rounded-full flex-shrink-0"
             />
-            <span className="font-heading font-semibold text-gray-700 tracking-tight truncate max-w-[150px] md:max-w-none text-[0.98rem] md:text-[1.02rem]">
+            <span className="font-heading font-medium text-gray-800 tracking-tight max-w-[170px] md:max-w-none truncate text-[0.95rem] md:text-[1.02rem]">
               {authorName}
             </span>
-            <span className="text-slate-300 flex-shrink-0">•</span>
-            <span className="whitespace-nowrap flex-shrink-0 text-[0.72rem] md:text-[0.8rem]">
+            <span className="text-slate-300 flex-shrink-0 -mx-0.5">•</span>
+            <span className="whitespace-nowrap flex-shrink-0 text-[0.68rem] md:text-[0.72rem] tracking-tight">
               <DateComponent dateString={post.date} />
             </span>
             {readingLabel && (
               <>
-                <span className="text-slate-300 flex-shrink-0">•</span>
-                <span className="whitespace-nowrap flex-shrink-0 type-meta text-slate-500 text-[0.72rem] md:text-[0.8rem]">
-                  {readingLabel}
-                </span>
+                <span className="text-slate-300 flex-shrink-0 -mx-0.5">•</span>
+                <span className="whitespace-nowrap flex-shrink-0 type-meta text-slate-500 text-[0.68rem] md:text-[0.72rem] tracking-tight">{readingLabel}</span>
               </>
             )}
           </div>
@@ -733,7 +731,7 @@ function LandingCompactBlogCard({
             className="type-card-excerpt text-[0.88rem] md:text-[0.95rem] text-slate-600 leading-relaxed line-clamp-2"
             dangerouslySetInnerHTML={{ __html: getExcerpt(cleanedExcerpt, 34) }}
           />
-          <div className="mt-auto flex items-center gap-3 text-[0.8rem] md:text-[0.9rem] text-slate-600 min-w-0 whitespace-nowrap overflow-hidden">
+          <div className="mt-auto flex items-center gap-2 text-[0.7rem] md:text-[0.75rem] text-slate-600 min-w-0 whitespace-nowrap overflow-hidden">
             <Image
               src={authorImage}
               alt={`${authorName} avatar`}
@@ -741,19 +739,17 @@ function LandingCompactBlogCard({
               height={36}
               className="w-9 h-9 rounded-full flex-shrink-0"
             />
-            <span className="font-heading font-semibold text-gray-700 tracking-tight truncate max-w-[150px] md:max-w-none text-[0.98rem] md:text-[1.02rem]">
+            <span className="font-heading font-medium text-gray-800 tracking-tight max-w-[170px] md:max-w-none truncate text-[0.95rem] md:text-[1.02rem]">
               {authorName}
             </span>
-            <span className="text-slate-300 flex-shrink-0">•</span>
-            <span className="whitespace-nowrap flex-shrink-0 text-[0.72rem] md:text-[0.8rem]">
+            <span className="text-slate-300 flex-shrink-0 -mx-0.5">•</span>
+            <span className="whitespace-nowrap flex-shrink-0 text-[0.68rem] md:text-[0.72rem] tracking-tight">
               <DateComponent dateString={post.date} />
             </span>
             {readingLabel && (
               <>
-                <span className="text-slate-300 flex-shrink-0">•</span>
-                <span className="whitespace-nowrap flex-shrink-0 type-meta text-slate-500 text-[0.72rem] md:text-[0.8rem]">
-                  {readingLabel}
-                </span>
+                <span className="text-slate-300 flex-shrink-0 -mx-0.5">•</span>
+                <span className="whitespace-nowrap flex-shrink-0 type-meta text-slate-500 text-[0.68rem] md:text-[0.72rem] tracking-tight">{readingLabel}</span>
               </>
             )}
           </div>
@@ -793,10 +789,8 @@ function LandingFilterSelect({
     <div className="w-full relative" ref={containerRef}>
       <button
         type="button"
-        className={`relative w-full h-11 rounded-2xl border text-left px-3.5 pr-9 text-sm font-medium flex items-center min-w-0 text-slate-900 focus:outline-none focus:ring-1 focus:ring-orange-200 transition-colors ${
-          isOpen
-            ? "border-orange-300 bg-orange-50"
-            : "border-slate-200 bg-white hover:border-orange-200 hover:bg-orange-50/40"
+        className={`relative w-full h-11 rounded-xl border text-left px-3.5 pr-9 text-sm font-medium flex items-center min-w-0 text-slate-900 focus:outline-none focus:ring-1 focus:ring-orange-200 transition-colors ${
+          isOpen ? "border-orange-300 bg-orange-50" : "border-slate-200 bg-white hover:border-orange-200 hover:bg-orange-50/40"
         }`}
         onClick={() => setIsOpen((prev) => !prev)}
       >
@@ -886,11 +880,14 @@ function LandingPaginationControls({
     });
   };
 
+  const baseButtonStyles =
+    "inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-lg text-xs font-semibold transition-colors";
+
   const pageButtonClasses = (isActive: boolean) =>
-    `w-10 h-10 rounded-xl text-sm font-semibold flex items-center justify-center transition-all ${
+    `${baseButtonStyles} ${
       isActive
-        ? "bg-orange-500 text-white shadow-[0_5px_14px_rgba(15,23,42,0.35)]"
-        : "bg-white border border-orange-100 text-slate-600 hover:text-orange-600 hover:border-orange-300 hover:shadow-[0_4px_10px_rgba(15,23,42,0.22)]"
+        ? "bg-orange-500 text-white shadow-sm"
+        : "border border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:text-orange-600"
     }`;
 
   const renderPageNode = (page: number) => {
@@ -910,10 +907,10 @@ function LandingPaginationControls({
   };
 
   const arrowClasses = (disabled: boolean) =>
-    `w-10 h-10 rounded-xl border text-base font-semibold flex items-center justify-center transition-all ${
+    `${baseButtonStyles} ${
       disabled
-        ? "border-orange-50 text-slate-300 cursor-not-allowed"
-        : "border-orange-100 text-slate-600 hover:text-orange-600 hover:border-orange-300 hover:shadow-[0_4px_10px_rgba(15,23,42,0.2)]"
+        ? "border border-slate-100 text-slate-300 cursor-not-allowed bg-white"
+        : "border border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:text-orange-600"
     }`;
 
   const renderArrow = (direction: "prev" | "next") => {
@@ -940,7 +937,7 @@ function LandingPaginationControls({
   const EllipsisButton = ({ direction }: { direction: "prev" | "next" }) => (
     <button
       type="button"
-      className="w-10 h-10 rounded-xl text-xl font-semibold text-slate-400 hover:text-orange-600 hover:border-orange-300 border border-transparent hover:shadow-[0_4px_10px_rgba(15,23,42,0.2)] transition-all"
+      className={`${baseButtonStyles} border border-transparent px-1 text-base text-slate-400 hover:text-orange-600`}
       onClick={() => shiftWindow(direction)}
       aria-label={direction === "prev" ? "Show previous pages" : "Show next pages"}
     >
@@ -949,15 +946,17 @@ function LandingPaginationControls({
   );
 
   return (
-    <div className="flex flex-wrap justify-center items-center gap-2 mt-12 mb-16">
-      {renderArrow("prev")}
-      {showLeadingFirst && renderPageNode(1)}
-      {showLeftEllipsis && <EllipsisButton direction="prev" />}
-      {pageRange.map(renderPageNode)}
-      {showRightEllipsis && <EllipsisButton direction="next" />}
-      {showTrailingLast && renderPageNode(totalPages)}
-      {renderArrow("next")}
-    </div>
+    <nav className="mt-12 mb-16 flex justify-center" aria-label="Pagination">
+      <div className="inline-flex flex-wrap items-center justify-center gap-1.5">
+        {renderArrow("prev")}
+        {showLeadingFirst && renderPageNode(1)}
+        {showLeftEllipsis && <EllipsisButton direction="prev" />}
+        {pageRange.map(renderPageNode)}
+        {showRightEllipsis && <EllipsisButton direction="next" />}
+        {showTrailingLast && renderPageNode(totalPages)}
+        {renderArrow("next")}
+      </div>
+    </nav>
   );
 }
 
