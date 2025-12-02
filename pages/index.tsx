@@ -386,7 +386,7 @@ export default function Index({
       <section className="relative z-10 px-4 sm:px-6 pt-10 pb-10 md:pt-14 md:pb-12">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-10 md:mb-12">
-            <h1 className="type-hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl p-2 leading-wide tracking-wider bg-gradient-to-r from-orange-500 via-orange-500 to-amber-400 bg-clip-text text-transparent">
+            <h1 className="type-hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl p-2 leading-wide tracking-wider bg-[linear-gradient(120deg,_#fdba74_0,_#fb923c_28%,_#f97316_55%,_#ea580c_80%,_#7c2d12_100%)] bg-clip-text text-transparent">
               The Keploy Blog
             </h1>
             <p className="type-hero-body mx-auto mt-4 mb-4 max-w-xl text-base sm:text-xl text-slate-600 leading-relaxed px-4">
