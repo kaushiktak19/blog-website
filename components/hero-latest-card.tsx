@@ -26,7 +26,6 @@ export default function HeroLatestCard({
 }: HeroLatestCardProps) {
   const readingTime = post.content ? 5 + calculateReadingTime(post.content) : undefined;
   const cleanedExcerpt = (post.excerpt || "").replace("Table of Contents", "");
-  const basePath = isCommunity ? "/community" : "/technology";
 
   if (variant === "visual") {
     return (

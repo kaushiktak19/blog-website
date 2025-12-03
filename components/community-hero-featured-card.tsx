@@ -9,7 +9,7 @@ import { getExcerpt } from "../utils/excerpt";
 
 type HeroCardVariant = "visual" | "details";
 
-interface HeroFeaturedCardProps {
+interface CommunityHeroFeaturedCardProps {
   post: Post;
   variant: HeroCardVariant;
   heading?: string;
@@ -17,13 +17,13 @@ interface HeroFeaturedCardProps {
   className?: string;
 }
 
-export default function HeroFeaturedCard({
+export default function CommunityHeroFeaturedCard({
   post,
   variant,
   heading,
   headingIcon,
   className = "",
-}: HeroFeaturedCardProps) {
+}: CommunityHeroFeaturedCardProps) {
   const readingTime = post.content ? 5 + calculateReadingTime(post.content) : undefined;
   const cleanedExcerpt = (post.excerpt || "").replace("Table of Contents", "");
 
@@ -52,7 +52,7 @@ export default function HeroFeaturedCard({
                   title={post.title}
                   coverImage={post.featuredImage}
                   slug={post.slug}
-                  isCommunity={false}
+                  isCommunity
                   containerClassName="h-full w-full"
                   imgClassName="h-full w-full object-cover object-center"
                 />
@@ -105,7 +105,7 @@ export default function HeroFeaturedCard({
     >
       <h3 className="type-card-title text-lg text-gray-700 font-medium line-clamp-1">
         <Link
-          href={`/technology/${post.slug}`}
+          href={`/community/${post.slug}`}
           className="hover:text-orange-700 transition-colors"
           dangerouslySetInnerHTML={{ __html: post.title }}
         />
@@ -117,3 +117,5 @@ export default function HeroFeaturedCard({
     </div>
   );
 }
+
+

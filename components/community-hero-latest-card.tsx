@@ -9,7 +9,7 @@ import { getExcerpt } from "../utils/excerpt";
 
 type HeroCardVariant = "visual" | "details";
 
-interface HeroFeaturedCardProps {
+interface CommunityHeroLatestCardProps {
   post: Post;
   variant: HeroCardVariant;
   heading?: string;
@@ -17,13 +17,13 @@ interface HeroFeaturedCardProps {
   className?: string;
 }
 
-export default function HeroFeaturedCard({
+export default function CommunityHeroLatestCard({
   post,
   variant,
   heading,
   headingIcon,
   className = "",
-}: HeroFeaturedCardProps) {
+}: CommunityHeroLatestCardProps) {
   const readingTime = post.content ? 5 + calculateReadingTime(post.content) : undefined;
   const cleanedExcerpt = (post.excerpt || "").replace("Table of Contents", "");
 
@@ -52,14 +52,13 @@ export default function HeroFeaturedCard({
                   title={post.title}
                   coverImage={post.featuredImage}
                   slug={post.slug}
-                  isCommunity={false}
+                  isCommunity
                   containerClassName="h-full w-full"
                   imgClassName="h-full w-full object-cover object-center"
                 />
               </div>
             </div>
           )}
-
           <div className="mt-3 py-2 pl-2 flex items-center gap-3 text-[0.75rem] md:text-[0.8rem] text-slate-600 min-w-0 whitespace-nowrap overflow-hidden">
             {post.ppmaAuthorImage && post.ppmaAuthorImage !== "imag1" && post.ppmaAuthorImage !== "image" ? (
               <Image
@@ -103,9 +102,9 @@ export default function HeroFeaturedCard({
     <div
       className={`rounded-2xl bg-white/95 border border-orange-100 shadow-[0_14px_40px_rgba(15,23,42,0.08)] hover:border-orange-300 hover:shadow-[0_26px_70px_rgba(15,23,42,0.14)] px-5 py-4 flex flex-col gap-3 transition-all duration-300 ${className}`}
     >
-      <h3 className="type-card-title text-lg text-gray-700 font-medium line-clamp-1">
+      <h3 className="type-card-title text-lg text-gray-800 font-medium line-clamp-1">
         <Link
-          href={`/technology/${post.slug}`}
+          href={`/community/${post.slug}`}
           className="hover:text-orange-700 transition-colors"
           dangerouslySetInnerHTML={{ __html: post.title }}
         />
@@ -117,3 +116,5 @@ export default function HeroFeaturedCard({
     </div>
   );
 }
+
+
