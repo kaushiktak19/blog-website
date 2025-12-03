@@ -449,7 +449,7 @@ export default function Index({
       <Container>
         <section className="mt-10 mb-14">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-10">
-            <div className="flex-[1.1] min-w-[260px] lg:pr-6">
+            <div className="flex-[1] min-w-[260px] lg:pr-6">
               <h2 className="type-section-title relative inline-block whitespace-nowrap text-3xl md:text-4xl lg:text-[2.25rem] tracking-[-0.01em] leading-snug text-gray-700 text-left">
                 <span className="relative z-10">All blogs</span>
                 <span className="absolute inset-x-0 bottom-0 h-3 bg-gradient-to-r from-orange-200/80 to-orange-100/80 -z-0" />
@@ -460,7 +460,7 @@ export default function Index({
             </div>
 
             <div className="w-full lg:flex-[1] mt-2 lg:mt-0">
-              <div className="rounded-2xl border border-slate-200/70 bg-white px-3 py-4 sm:px-3.5 shadow-[0_14px_45px_rgba(15,23,42,0.08)]">
+              <div className="rounded-2xl border border-slate-200/70 bg-white px-3 py-4 sm:px-3.5 shadow-[0_14px_45px_rgba(15,23,42,0.08)] lg:relative lg:z-20 lg:-translate-x-6">
                 <div className="flex flex-wrap gap-2.5 lg:gap-3 items-stretch lg:items-center lg:flex-nowrap lg:justify-end">
                   <div className="relative flex-1 min-w-[200px] lg:max-w-[240px]">
                     <div className="relative h-11 rounded-2xl border border-slate-200 bg-white transition-all focus-within:border-orange-300 focus-within:ring-1 focus-within:ring-orange-200 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
