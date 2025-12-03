@@ -89,16 +89,16 @@ export default function LandingCollectionCard({
       </div>
       <div className="flex items-center gap-2.5">
         {accentConfig.icon}
-        <p className="type-meta text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-700">
+        <p className="type-meta text-[11px] font-extrabold uppercase tracking-[0.28em] text-slate-900">
           {accentConfig.badge}
         </p>
       </div>
-      <p className="mt-2.5 text-[0.86rem] md:text-[0.93rem] leading-relaxed text-slate-600 flex-1 line-clamp-3">
-        {title && (
+      <p className="mt-2.5 text-[0.8rem] md:text-[0.88rem] leading-relaxed text-slate-500 flex-1 line-clamp-3">
+        {/* {title && (
           <span className="block font-heading text-[0.94rem] md:text-[1rem] text-gray-800 mb-1">
             {title}
           </span>
-        )}
+        )} */}
         {description}
       </p>
     </Link>

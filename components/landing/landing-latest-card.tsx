@@ -53,7 +53,7 @@ export default function LandingLatestCard({
       )}
       <Link
         href={`${basePath}/${post.slug}`}
-        className="group flex flex-col gap-4 px-5 py-5 flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
+        className="group flex flex-col gap-3 px-5 py-3.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
         aria-label={`Read ${post.title}`}
       >
         {post.featuredImage && (
@@ -70,7 +70,7 @@ export default function LandingLatestCard({
             </div>
           </div>
         )}
-        <div className="mt-3 flex items-center gap-3 text-[0.75rem] md:text-[0.8rem] text-slate-600 min-w-0 whitespace-nowrap overflow-hidden">
+        <div className="mt-3 py-2 pl-2 flex items-center gap-3 text-[0.75rem] md:text-[0.8rem] text-slate-600 min-w-0 whitespace-nowrap overflow-hidden">
           {post.ppmaAuthorImage && post.ppmaAuthorImage !== "imag1" && post.ppmaAuthorImage !== "image" ? (
             <Image
               src={post.ppmaAuthorImage}
@@ -109,32 +109,32 @@ export default function LandingLatestCard({
           dangerouslySetInnerHTML={{ __html: post.title }}
         />
         <div
-          className="type-card-excerpt text-[0.88rem] md:text-[0.95rem] leading-relaxed line-clamp-3 text-slate-600 mb-3.5"
-          dangerouslySetInnerHTML={{ __html: getExcerpt(cleanedExcerpt, 36) }}
+          className="type-card-excerpt text-[0.86rem] md:text-[0.93rem] leading-relaxed line-clamp-3 text-slate-600 mb-0"
+          dangerouslySetInnerHTML={{ __html: getExcerpt(cleanedExcerpt, 34) }}
         />
+        {typeof dotsCount === "number" && dotsCount > 1 && typeof activeIndex === "number" && onDotClick && (
+          <div className="mt-1 flex items-center justify-center gap-2 pb-8 pt-8">
+            {Array.from({ length: dotsCount }, (_, index) => {
+              const isActive = index === activeIndex;
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => onDotClick(index)}
+                  className={`rounded-full transition-all duration-300 ${
+                    isActive ? "bg-orange-500" : "bg-orange-500/30 hover:bg-orange-500/60"
+                  }`}
+                  style={{
+                    width: isActive ? "1.75rem" : "0.75rem",
+                    height: "0.75rem",
+                  }}
+                  aria-label={`View blog ${index + 1}`}
+                />
+              );
+            })}
+          </div>
+        )}
       </Link>
-      {typeof dotsCount === "number" && dotsCount > 1 && typeof activeIndex === "number" && onDotClick && (
-        <div className="flex items-center justify-center gap-2 pb-5 pt-3">
-          {Array.from({ length: dotsCount }, (_, index) => {
-            const isActive = index === activeIndex;
-            return (
-              <button
-                key={index}
-                type="button"
-                onClick={() => onDotClick(index)}
-                className={`rounded-full transition-all duration-300 ${
-                  isActive ? "bg-orange-500" : "bg-orange-500/30 hover:bg-orange-500/60"
-                }`}
-                style={{
-                  width: isActive ? "1.75rem" : "0.75rem",
-                  height: "0.75rem",
-                }}
-                aria-label={`View blog ${index + 1}`}
-              />
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }

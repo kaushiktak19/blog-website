@@ -386,7 +386,7 @@ export default function Index({
       <section className="relative z-10 px-4 sm:px-6 pt-10 pb-10 md:pt-14 md:pb-12">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-10 md:mb-12">
-            <h1 className="type-hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.5rem] p-2 leading-tight tracking-wider bg-[linear-gradient(120deg,_#fdba74_0,_#fb923c_28%,_#f97316_55%,_#ea580c_80%,_#7c2d12_100%)] bg-clip-text text-transparent">
+            <h1 className="type-hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.75rem] 2xl:text-[6.1rem] p-2 leading-tight tracking-wider bg-[linear-gradient(120deg,_#fdba74_0,_#fb923c_28%,_#f97316_55%,_#ea580c_80%,_#7c2d12_100%)] bg-clip-text text-transparent">
               The Keploy Blog
             </h1>
             <p className="type-hero-body mx-auto mt-4 mb-4 max-w-xl text-base sm:text-xl text-slate-600 leading-relaxed px-4">
@@ -403,7 +403,7 @@ export default function Index({
                       post={activePost}
                       heading="Latest blogs"
                       headingIcon={<Sparkles className="h-5 w-5 text-white" />}
-                      className={`h-full transition-all duration-500 ${
+                      className={`transition-all duration-500 ${
                         isAnimating ? "opacity-80 scale-[0.98]" : "opacity-100 scale-100"
                       }`}
                       basePath={activeBasePath}
@@ -448,7 +448,7 @@ export default function Index({
 
       <Container>
         <section className="mt-10 mb-14">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between mb-10 lg:gap-12">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-10">
             <div className="flex-[1.1] min-w-[260px] lg:pr-6">
               <h2 className="type-section-title relative inline-block whitespace-nowrap text-3xl md:text-4xl lg:text-[2.25rem] tracking-[-0.01em] leading-snug text-gray-700 text-left">
                 <span className="relative z-10">All blogs</span>
@@ -460,8 +460,8 @@ export default function Index({
             </div>
 
             <div className="w-full lg:flex-[1] mt-2 lg:mt-0">
-              <div className="rounded-2xl border border-slate-200/70 bg-white px-3.5 py-3.5 shadow-[0_14px_45px_rgba(15,23,42,0.08)]">
-                <div className="flex flex-wrap gap-2.5 lg:gap-3 items-center lg:flex-nowrap lg:justify-end">
+              <div className="rounded-2xl border border-slate-200/70 bg-white px-3 py-4 sm:px-3.5 shadow-[0_14px_45px_rgba(15,23,42,0.08)]">
+                <div className="flex flex-wrap gap-2.5 lg:gap-3 items-stretch lg:items-center lg:flex-nowrap lg:justify-end">
                   <div className="relative flex-1 min-w-[200px] lg:max-w-[240px]">
                     <div className="relative h-11 rounded-2xl border border-slate-200 bg-white transition-all focus-within:border-orange-300 focus-within:ring-1 focus-within:ring-orange-200 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
                       <input
