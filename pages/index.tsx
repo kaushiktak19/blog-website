@@ -27,6 +27,8 @@ import DateComponent from "../components/date";
 import { getExcerpt } from "../utils/excerpt";
 import { FaSearch, FaTimes } from "react-icons/fa";
 import { calculateReadingTime } from "../utils/calculateReadingTime";
+import AuthorCard from "../components/AuthorCard";
+import { authorData, getAuthorInfoByName } from "../lib/authorData";
 
 type PostEdge = {
   node: Post;
@@ -604,6 +606,38 @@ export default function Index({
           onPageChange={handlePageChange}
         />
       </Container>
+
+      <section className="py-16 bg-gradient-to-b from-orange-50/40 to-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="mb-8 text-center">
+            <h2 className="text-3xl font-bold text-gray-900">
+              Meet our authors
+            </h2>
+            <p className="mt-2 text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
+              A small set of creators whose articles you’ll often see on this blog.
+            </p>
+          </div>
+
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mx-1 md:mx-0">
+            {authorData.slice(0, 8).map((author) => {
+              const info = getAuthorInfoByName(author.name);
+              return (
+                <div
+                  key={author.name}
+                  className="group bg-white/10 backdrop-blur-sm rounded-3xl p-4 md:p-5 border-2 border-orange-300/50 shadow-xl shadow-black/20 transition-transform duration-300 ease-out will-change-transform overflow-hidden hover:border-orange-400/70 hover:shadow-2xl hover:shadow-black/25 hover:-translate-y-2"
+                >
+                  <AuthorCard
+                    name={author.name}
+                    avatarUrl={info?.image}
+                    bio={info?.description}
+                    linkedin={info?.linkedin}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
       <Container>
         <Testimonials />
