@@ -80,28 +80,30 @@ const BLOG_COLLECTION_OPTIONS: { value: CollectionFilter; label: string }[] = [
 
 const LANDING_PAGE_SIZE = 18;
 
-// Prioritized tags to show first in the tags card
-const PRIORITIZED_TAGS = [
-  "testing",
-  "api",
-  "devops",
-  "kubernetes",
-  "docker",
-  "microservices",
-  "automation",
-  "ci/cd",
-  "open source",
-  "backend",
-  "go",
-  "python",
-  "javascript",
-  "typescript",
-  "graphql",
-  "rest",
-  "observability",
-  "monitoring",
-  "performance",
-  "security",
+// Hardcoded tags to display in the hero section (22 most relevant tags for Keploy blog)
+const HERO_TAGS: TagNode[] = [
+  { name: "testing" },
+  { name: "api" },
+  { name: "api testing" },
+  { name: "test automation" },
+  { name: "e2e testing" },
+  { name: "devops" },
+  { name: "kubernetes" },
+  { name: "docker" },
+  { name: "microservices" },
+  { name: "automation" },
+  { name: "ci/cd" },
+  { name: "go" },
+  { name: "python" },
+  { name: "javascript" },
+  { name: "typescript" },
+  { name: "rest" },
+  { name: "observability" },
+  { name: "monitoring" },
+  { name: "backend" },
+  { name: "open source" },
+  { name: "graphql" },
+  { name: "security" },
 ];
 
 const dedupePosts = (posts: CategorizedPost[] = []) => {
@@ -167,46 +169,8 @@ export default function Index({
       .slice(0, 6);
   }, [technologyNodes, communityNodes]);
 
-  const curatedTags = useMemo(() => {
-    const allTags = (tags || []).filter(
-      (tag) => Boolean(tag?.name) && tag.name.trim().length > 0
-    );
-    
-    // Normalize tag names for comparison (lowercase, trim)
-    const normalizeTagName = (name: string) => name.toLowerCase().trim();
-    
-    // Separate prioritized and other tags
-    const prioritized: TagNode[] = [];
-    const others: TagNode[] = [];
-    
-    const prioritizedLower = PRIORITIZED_TAGS.map(normalizeTagName);
-    const seen = new Set<string>();
-    
-    // First, collect prioritized tags
-    for (const tag of allTags) {
-      const normalized = normalizeTagName(tag.name);
-      if (seen.has(normalized)) continue;
-      seen.add(normalized);
-      
-      if (prioritizedLower.includes(normalized)) {
-        prioritized.push(tag);
-      } else {
-        others.push(tag);
-      }
-    }
-    
-    // Sort prioritized tags by their order in PRIORITIZED_TAGS
-    prioritized.sort((a, b) => {
-      const aIndex = prioritizedLower.indexOf(normalizeTagName(a.name));
-      const bIndex = prioritizedLower.indexOf(normalizeTagName(b.name));
-      return aIndex - bIndex;
-    });
-    
-    // Combine: prioritized first, then others (up to 40 total)
-    const combined = [...prioritized, ...others].slice(0, 40);
-    
-    return combined;
-  }, [tags]);
+  // Simple hardcoded tags for hero section
+  const curatedTags = HERO_TAGS;
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -537,13 +501,13 @@ export default function Index({
 
               <div className="grid h-full gap-5 lg:grid-rows-[auto_1fr_0.72fr] overflow-visible">
                 <LandingTagsCard tags={curatedTags} className="text-[13px] sm:text-sm" />
-                <div className="grid h-full gap-5 sm:grid-cols-2">
+                <div className="grid gap-5 sm:grid-cols-2">
                   <LandingCollectionCard
                     title="Tech deep dives, architecture notes, and product changelogs."
                     description="Follow every release, understand the architecture trade-offs, and see how engineers operationalize each change across production."
                     href="/technology"
                     accent="technology"
-                    className="h-full text-sm sm:text-[0.95rem]"
+                    className="text-sm sm:text-[0.95rem]"
                     imageUrls={technologyImageUrls}
                   />
                   <LandingCollectionCard
@@ -551,7 +515,7 @@ export default function Index({
                     description="Discover how builders run meetups, mentor peers, document takeaways, and grow the Keploy ecosystem across global chapters."
                     href="/community"
                     accent="community"
-                    className="h-full text-sm sm:text-[0.95rem]"
+                    className="text-sm sm:text-[0.95rem]"
                     imageUrls={communityImageUrls}
                   />
                 </div>
@@ -1097,10 +1061,9 @@ function LandingPaginationControls({
 }
 
 export const getStaticProps: GetStaticProps = async ({ preview = false }) => {
-  const [communityNodes, technologyNodes, allTags] = await Promise.all([
+  const [communityNodes, technologyNodes] = await Promise.all([
     getAllCommunityPosts(preview),
     getAllTechnologyPosts(preview),
-    getAllTags(),
   ]);
 
   const communityEdges = Array.isArray(communityNodes)
@@ -1114,7 +1077,7 @@ export const getStaticProps: GetStaticProps = async ({ preview = false }) => {
     props: {
       communityPosts: communityEdges,
       technologyPosts: technologyEdges,
-      tags: Array.isArray(allTags) ? allTags : [],
+      tags: [], // Not needed anymore since we use hardcoded tags
       preview,
     },
     revalidate: 30,
