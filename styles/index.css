@@ -431,3 +431,34 @@ td{
     transform: translateY(-16px) translateX(4px);
   }
 }
+
+/* Testimonials marquee */
+.marquee-row {
+  border-top: 1px solid hsl(var(--border));
+}
+
+.marquee-row:last-child {
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.mask-gradient-x {
+  mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+}
+
+@keyframes marquee-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marquee-right {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}

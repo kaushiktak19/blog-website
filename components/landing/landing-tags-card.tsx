@@ -33,15 +33,15 @@ export default function LandingTagsCard({
 }: LandingTagsCardProps) {
   return (
     <div
-      className={`rounded-2xl border border-orange-100 bg-white/95 px-5 py-5 shadow-[0_14px_45px_rgba(15,23,42,0.08)] flex flex-col h-full ${className}`}
+      className={`rounded-2xl border border-orange-100 bg-white/95 px-5 py-5 shadow-[0_14px_45px_rgba(15,23,42,0.08)] flex flex-col overflow-visible ${className}`}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-shrink-0">
         <TagIcon className="h-4 w-4 text-orange-500" />
         <p className="type-meta text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
           Trending tags
         </p>
       </div>
-      <div className="mt-2.5 flex flex-wrap gap-2">
+      <div className="mt-2.5 flex flex-wrap gap-2 overflow-visible">
         {tags.length === 0 ? (
           <span className="text-sm text-slate-500">No tags available yet.</span>
         ) : (
@@ -60,7 +60,7 @@ export default function LandingTagsCard({
           })
         )}
       </div>
-      <div className="mt-auto flex justify-end">
+      <div className="mt-auto pt-2 flex justify-end flex-shrink-0">
         <Link
           href="/tag"
           className="mt-3 inline-flex items-center text-xs font-semibold text-orange-600 transition-colors hover:text-orange-700"

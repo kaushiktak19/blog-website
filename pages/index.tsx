@@ -294,7 +294,33 @@ export default function Index({
       if (result.length >= 9) break;
     }
 
-    return result;
+    // Enforce preferred display order if present
+    const desiredOrder = ["neha", "shubham", "achananadi", "amaan", "charan", "gaurav"];
+    const nameKey = (value: string) => value.toLowerCase().replace(/\s+/g, "");
+
+    const lookup = new Map<string, FeaturedAuthor>();
+    for (const author of result) {
+      lookup.set(nameKey(author.name), author);
+    }
+
+    const ordered: FeaturedAuthor[] = [];
+    for (const desired of desiredOrder) {
+      const match = Array.from(lookup.entries()).find(([key]) => key.includes(desired));
+      if (match && !ordered.some((a) => a.name === match[1].name)) {
+        ordered.push(match[1]);
+      }
+    }
+
+    // Append any remaining authors that were not in the preferred list
+    for (const author of result) {
+      if (!ordered.some((a) => a.name === author.name)) {
+        ordered.push(author);
+      }
+    }
+
+    // Limit to requested order length if provided, otherwise keep original cap
+    const cap = desiredOrder.length > 0 ? desiredOrder.length : 9;
+    return ordered.slice(0, cap);
   }, [allCategorizedPosts]);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -507,8 +533,8 @@ export default function Index({
                 </div>
               </div>
 
-              <div className="grid h-full gap-5 lg:grid-rows-[0.28fr_1fr_0.72fr]">
-                <LandingTagsCard tags={curatedTags} className="h-full text-[13px] sm:text-sm" />
+              <div className="grid h-full gap-5 lg:grid-rows-[auto_1fr_0.72fr] overflow-visible">
+                <LandingTagsCard tags={curatedTags} className="text-[13px] sm:text-sm" />
                 <div className="grid h-full gap-5 sm:grid-cols-2">
                   <LandingCollectionCard
                     title="Tech deep dives, architecture notes, and product changelogs."
