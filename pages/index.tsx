@@ -279,48 +279,50 @@ export default function Index({
   );
 
   const featuredAuthors = useMemo<FeaturedAuthor[]>(() => {
-    const seen = new Set<string>();
-    const result: FeaturedAuthor[] = [];
+    const desiredOrder = [
+      "neha gupta",
+      "shubham jain",
+      "achanandhi",
+      "amaan bhati",
+      "charan",
+      "gourav",
+      "gaurav",
+    ];
 
+    const normalize = (value?: string) => (value || "").toLowerCase().replace(/\s+/g, " ").trim();
+
+    // Capture avatar from posts when available
+    const avatarLookup = new Map<string, string>();
     for (const post of allCategorizedPosts) {
-      const rawName = post.ppmaAuthorName || "Anonymous";
-      const name = formatAuthorName(rawName);
-      if (seen.has(name)) continue;
-      seen.add(name);
-
-      const avatarUrl = resolveAuthorImage(post.ppmaAuthorImage);
-      result.push({ name, avatarUrl });
-
-      if (result.length >= 9) break;
+      const norm = normalize(post.ppmaAuthorName);
+      if (norm && !avatarLookup.has(norm)) {
+        avatarLookup.set(norm, resolveAuthorImage(post.ppmaAuthorImage));
+      }
     }
 
-    // Enforce preferred display order if present
-    const desiredOrder = ["neha", "shubham", "achananadi", "amaan", "charan", "gaurav"];
-    const nameKey = (value: string) => value.toLowerCase().replace(/\s+/g, "");
-
-    const lookup = new Map<string, FeaturedAuthor>();
-    for (const author of result) {
-      lookup.set(nameKey(author.name), author);
+    // Author info lookup from authorData
+    const infoLookup = new Map<string, (typeof authorData)[number]>();
+    for (const info of authorData) {
+      infoLookup.set(normalize(info.name), info);
     }
 
     const ordered: FeaturedAuthor[] = [];
     for (const desired of desiredOrder) {
-      const match = Array.from(lookup.entries()).find(([key]) => key.includes(desired));
-      if (match && !ordered.some((a) => a.name === match[1].name)) {
-        ordered.push(match[1]);
-      }
+      const infoEntry = Array.from(infoLookup.entries()).find(([key]) => key.includes(desired));
+      if (!infoEntry) continue;
+      const [, info] = infoEntry;
+      const norm = normalize(info.name);
+      const avatar =
+        avatarLookup.get(norm) ||
+        (info.image ? resolveAuthorImage(info.image) : "/blog/images/author.png");
+
+      ordered.push({
+        name: info.name,
+        avatarUrl: avatar,
+      });
     }
 
-    // Append any remaining authors that were not in the preferred list
-    for (const author of result) {
-      if (!ordered.some((a) => a.name === author.name)) {
-        ordered.push(author);
-      }
-    }
-
-    // Limit to requested order length if provided, otherwise keep original cap
-    const cap = desiredOrder.length > 0 ? desiredOrder.length : 9;
-    return ordered.slice(0, cap);
+    return ordered;
   }, [allCategorizedPosts]);
 
   const [searchTerm, setSearchTerm] = useState("");

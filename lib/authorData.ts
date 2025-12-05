@@ -43,6 +43,18 @@ export const authorData: AuthorInfo[] = [
     linkedin: "https://www.linkedin.com/in/monasri-mohandoss-2131b4252/",
   },
   {
+    name: "Shubham Jain",
+    description:
+      "Cloud technology veteran; among the youngest to complete all five AWS certifications, including Solutions Architect Professional and DevOps Engineer Professional.",
+    linkedin: "https://in.linkedin.com/in/slayerjain",
+  },
+  {
+    name: "Achanandhi M",
+    description:
+      "Developer Advocate at Keploy; cloud-native, CNCF, testing, and GenAI enthusiast; community builder and athlete who enjoys books like The Alchemist and Think Like a Monk.",
+    linkedin: "https://in.linkedin.com/in/achanandhi-m",
+  },
+  {
     name: "Amaan Bhati",
     description:
       "CSE student and web developer focused on JavaScript, React, Tailwind, TypeScript, Next.js, and Three.js.",
@@ -53,6 +65,18 @@ export const authorData: AuthorInfo[] = [
     description:
       "Building Keploy.io, an eBPF-based open source framework to generate test cases and data stubs from API calls.",
     linkedin: "https://www.linkedin.com/posts/neha-gup",
+  },
+  {
+    name: "Charan Kamarapu",
+    description:
+      "Aspires to tackle challenging projects; skilled in Python, HTML, CSS, JS, MongoDB, ML, image processing, NLP, and data structures.",
+    linkedin: "",
+  },
+  {
+    name: "Gourav Kumar",
+    description:
+      "Software engineer with experience in eBPF, Java SDKs, and Docker internals; two-time GSoC mentor focused on mentoring and building robust systems.",
+    linkedin: "",
   },
   {
     name: "Sarthak Shyngle",
