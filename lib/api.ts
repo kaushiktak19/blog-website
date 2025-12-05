@@ -51,37 +51,45 @@ export async function getAllTags() {
   let endCursor = null;
   let allTags = [];
 
-  while (hasNextPage) {
-    const data = await fetchAPI(
-      `
-      query AllTags($first: Int!, $after: String) {
-        tags(first: $first, after: $after) {
-          edges {
-            node {
-              name
+  try {
+    while (hasNextPage) {
+      const data = await fetchAPI(
+        `
+        query AllTags($first: Int!, $after: String) {
+          tags(first: $first, after: $after) {
+            edges {
+              node {
+                name
+              }
             }
-          }
-          pageInfo {
-            hasNextPage
-            endCursor
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
           }
         }
       }
-    `,
-      {
-        variables: {
-          first: 100, // Adjust as needed
-          after: endCursor,
-        },
-      }
-    );
+      `,
+        {
+          variables: {
+            first: 100,
+            after: endCursor,
+          },
+        }
+      );
 
-    const tags = data?.tags?.edges.map((edge) => edge.node);
-    allTags = allTags.concat(tags);
+      const tags = data?.tags?.edges?.map((edge) => edge.node) || [];
+      allTags = allTags.concat(tags);
 
-    hasNextPage = data?.tags?.pageInfo?.hasNextPage;
-    endCursor = data?.tags?.pageInfo?.endCursor;
+      hasNextPage = data?.tags?.pageInfo?.hasNextPage;
+      endCursor = data?.tags?.pageInfo?.endCursor;
+    }
+  } catch (error) {
+    console.error("Error in getAllTags:", error);
+    // Fall back to an empty list so pages can still render
+    hasNextPage = false;
   }
+
   return allTags;
 }
 

@@ -29,6 +29,7 @@ import { FaSearch, FaTimes } from "react-icons/fa";
 import { calculateReadingTime } from "../utils/calculateReadingTime";
 import AuthorCard from "../components/AuthorCard";
 import { authorData, getAuthorInfoByName } from "../lib/authorData";
+import { sanitizeAuthorSlug } from "../utils/sanitizeAuthorSlug";
 
 type PostEdge = {
   node: Post;
@@ -79,6 +80,30 @@ const BLOG_COLLECTION_OPTIONS: { value: CollectionFilter; label: string }[] = [
 
 const LANDING_PAGE_SIZE = 18;
 
+// Prioritized tags to show first in the tags card
+const PRIORITIZED_TAGS = [
+  "testing",
+  "api",
+  "devops",
+  "kubernetes",
+  "docker",
+  "microservices",
+  "automation",
+  "ci/cd",
+  "open source",
+  "backend",
+  "go",
+  "python",
+  "javascript",
+  "typescript",
+  "graphql",
+  "rest",
+  "observability",
+  "monitoring",
+  "performance",
+  "security",
+];
+
 const dedupePosts = (posts: CategorizedPost[] = []) => {
   const seen = new Set<string>();
   return posts.filter((post) => {
@@ -112,6 +137,11 @@ const resolveAuthorImage = (image?: string | null) => {
   }
   return image;
 };
+
+type FeaturedAuthor = {
+  name: string;
+  avatarUrl?: string;
+};
 export default function Index({
   communityPosts,
   technologyPosts,
@@ -138,7 +168,44 @@ export default function Index({
   }, [technologyNodes, communityNodes]);
 
   const curatedTags = useMemo(() => {
-    return (tags || []).filter((tag) => Boolean(tag?.name)).slice(0, 15);
+    const allTags = (tags || []).filter(
+      (tag) => Boolean(tag?.name) && tag.name.trim().length > 0
+    );
+    
+    // Normalize tag names for comparison (lowercase, trim)
+    const normalizeTagName = (name: string) => name.toLowerCase().trim();
+    
+    // Separate prioritized and other tags
+    const prioritized: TagNode[] = [];
+    const others: TagNode[] = [];
+    
+    const prioritizedLower = PRIORITIZED_TAGS.map(normalizeTagName);
+    const seen = new Set<string>();
+    
+    // First, collect prioritized tags
+    for (const tag of allTags) {
+      const normalized = normalizeTagName(tag.name);
+      if (seen.has(normalized)) continue;
+      seen.add(normalized);
+      
+      if (prioritizedLower.includes(normalized)) {
+        prioritized.push(tag);
+      } else {
+        others.push(tag);
+      }
+    }
+    
+    // Sort prioritized tags by their order in PRIORITIZED_TAGS
+    prioritized.sort((a, b) => {
+      const aIndex = prioritizedLower.indexOf(normalizeTagName(a.name));
+      const bIndex = prioritizedLower.indexOf(normalizeTagName(b.name));
+      return aIndex - bIndex;
+    });
+    
+    // Combine: prioritized first, then others (up to 40 total)
+    const combined = [...prioritized, ...others].slice(0, 40);
+    
+    return combined;
   }, [tags]);
 
   const [activeIndex, setActiveIndex] = useState(0);
@@ -210,6 +277,25 @@ export default function Index({
     () => dedupePosts([...categorizedTechnologyPosts, ...categorizedCommunityPosts]),
     [categorizedTechnologyPosts, categorizedCommunityPosts]
   );
+
+  const featuredAuthors = useMemo<FeaturedAuthor[]>(() => {
+    const seen = new Set<string>();
+    const result: FeaturedAuthor[] = [];
+
+    for (const post of allCategorizedPosts) {
+      const rawName = post.ppmaAuthorName || "Anonymous";
+      const name = formatAuthorName(rawName);
+      if (seen.has(name)) continue;
+      seen.add(name);
+
+      const avatarUrl = resolveAuthorImage(post.ppmaAuthorImage);
+      result.push({ name, avatarUrl });
+
+      if (result.length >= 9) break;
+    }
+
+    return result;
+  }, [allCategorizedPosts]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedAuthor, setSelectedAuthor] = useState("all");
@@ -388,7 +474,7 @@ export default function Index({
       <section className="relative z-10 px-4 sm:px-6 pt-10 pb-10 md:pt-14 md:pb-12">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-10 md:mb-12">
-            <h1 className="type-hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.75rem] 2xl:text-[6.1rem] p-2 leading-tight tracking-wider bg-[linear-gradient(120deg,_#fdba74_0,_#fb923c_28%,_#f97316_55%,_#ea580c_80%,_#7c2d12_100%)] bg-clip-text text-transparent">
+            <h1 className="type-hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.75rem] 2xl:text-[6.1rem] p-3 leading-tight tracking-wider bg-[linear-gradient(120deg,_#fdba74_0,_#fb923c_28%,_#f97316_55%,_#ea580c_80%,_#7c2d12_100%)] bg-clip-text text-transparent">
               The Keploy Blog
             </h1>
             <p className="type-hero-body mx-auto mt-4 mb-4 max-w-xl text-base sm:text-xl text-slate-600 leading-relaxed px-4">
@@ -607,37 +693,48 @@ export default function Index({
         />
       </Container>
 
-      <section className="py-16 bg-gradient-to-b from-orange-50/40 to-white">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="mb-8 text-center">
-            <h2 className="text-3xl font-bold text-gray-900">
-              Meet our authors
-            </h2>
-            <p className="mt-2 text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
-              A small set of creators whose articles you’ll often see on this blog.
-            </p>
+      <Container>
+        <section className="mt-10 mb-16">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
+            <div className="flex-[1] min-w-[260px] lg:pr-6">
+              <h2 className="type-section-title relative inline-block whitespace-nowrap text-3xl md:text-4xl lg:text-[2.25rem] tracking-[-0.01em] leading-snug text-gray-700 text-left">
+                <span className="relative z-10">Meet our authors</span>
+                <span className="absolute inset-x-0 bottom-0 h-3 bg-gradient-to-r from-orange-200/80 to-orange-100/80 -z-0" />
+              </h2>
+            </div>
           </div>
 
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mx-1 md:mx-0">
-            {authorData.slice(0, 8).map((author) => {
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {featuredAuthors.map((author) => {
               const info = getAuthorInfoByName(author.name);
               return (
-                <div
+                <Link
                   key={author.name}
-                  className="group bg-white/10 backdrop-blur-sm rounded-3xl p-4 md:p-5 border-2 border-orange-300/50 shadow-xl shadow-black/20 transition-transform duration-300 ease-out will-change-transform overflow-hidden hover:border-orange-400/70 hover:shadow-2xl hover:shadow-black/25 hover:-translate-y-2"
+                  href={`/authors/${sanitizeAuthorSlug(author.name)}`}
+                  className="group block h-full"
                 >
                   <AuthorCard
                     name={author.name}
-                    avatarUrl={info?.image}
+                    avatarUrl={author.avatarUrl}
                     bio={info?.description}
                     linkedin={info?.linkedin}
                   />
-                </div>
+                </Link>
               );
             })}
           </div>
-        </div>
-      </section>
+
+          <div className="mt-8 flex justify-end">
+            <Link
+              href="/authors"
+              className="inline-flex items-center text-sm font-semibold text-orange-600 transition-colors hover:text-orange-700"
+            >
+              View all authors
+              <span className="ml-1.5 text-base">→</span>
+            </Link>
+          </div>
+        </section>
+      </Container>
 
       <Container>
         <Testimonials />

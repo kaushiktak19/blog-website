@@ -31,12 +31,12 @@ export default function AuthorCard({
     avatarUrl.trim() !== "";
 
   return (
-    <div className="bg-white/20 backdrop-blur-sm rounded-2xl border border-white/10 shadow-lg shadow-black/10">
+    <article className="h-full rounded-2xl bg-white/95 border border-orange-100 shadow-[0_14px_45px_rgba(15,23,42,0.08)] transition-all duration-300 overflow-hidden hover:border-orange-300 hover:shadow-[0_22px_70px_rgba(15,23,42,0.12)] hover:-translate-y-1.5 flex flex-col group">
       <div className="w-full h-52 relative">
         <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-br from-orange-100/70 via-orange-50/60 to-orange-200/70" />
 
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-          <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-white shadow-lg">
+          <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-white shadow-lg transition-transform duration-300 group-hover:scale-105">
             {hasAvatar ? (
               <Image
                 src={avatarUrl as string}
@@ -58,9 +58,9 @@ export default function AuthorCard({
 
       <div className="mx-6 h-0.5 bg-gradient-to-r from-orange-300/20 via-orange-500/40 to-orange-300/20" />
 
-      <div className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <h2 className="text-2xl font-semibold text-gray-900 leading-tight flex-1 pr-2">
+      <div className="px-6 py-5 flex flex-col flex-1 gap-3.5">
+        <div className="flex items-start justify-between">
+          <h2 className="type-card-title text-xl md:text-2xl text-gray-800 font-medium leading-tight flex-1 pr-2 group-hover:text-orange-600 transition-colors duration-200">
             {name}
           </h2>
           {linkedin && (
@@ -70,6 +70,7 @@ export default function AuthorCard({
               rel="noopener noreferrer"
               aria-label={`${name} LinkedIn`}
               className="text-gray-400 transition-colors hover:text-orange-600 flex-shrink-0"
+              onClick={(e) => e.stopPropagation()}
             >
               <IoLogoLinkedin className="h-5 w-5" />
             </a>
@@ -77,7 +78,7 @@ export default function AuthorCard({
         </div>
 
         <div
-          className="text-gray-700 text-sm leading-relaxed mb-6 min-h-[4.5rem] overflow-hidden"
+          className="type-card-excerpt text-[0.88rem] md:text-[0.95rem] text-slate-600 leading-relaxed overflow-hidden"
           style={{
             display: "-webkit-box",
             WebkitLineClamp: 3,
@@ -87,7 +88,7 @@ export default function AuthorCard({
           {displayBio}
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 

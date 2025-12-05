@@ -22,7 +22,7 @@ export default function LandingWriterProgramCard({ className = "" }: LandingWrit
         </p>
       </div>
       <Link
-        href="https://keploy.notion.site/Writer-Program"
+        href="https://www.writers.keploy.io/"
         target="_blank"
         rel="noreferrer"
         className="mt-3 inline-flex items-center justify-center rounded-full border border-orange-200 bg-white text-orange-700 px-4 py-1.5 text-xs font-semibold shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition hover:bg-orange-50 hover:border-orange-300 hover:text-orange-800 hover:shadow-[0_7px_18px_rgba(15,23,42,0.14)]"
